@@ -1,0 +1,2075 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>স্মার্ট বাজার আল্টিমেট</title>
+    <link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#3b82f6">
+<link rel="apple-touch-icon" href="https://cdn-icons-png.flaticon.com/512/3737/3737151.png">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.2/dist/chart.umd.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Hind+Siliguri:wght@400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        dark: { bg: '#0f172a', card: '#1e293b', text: '#f1f5f9' },
+                        primary: '#3b82f6', // নীল রঙ
+                        secondary: '#6366f1'
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body { font-family: 'Hind Siliguri', sans-serif; -webkit-tap-highlight-color: transparent; }
+        .scrollbar-hide::-webkit-scrollbar { display: none; }
+        .scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
+        
+        /* Animations */
+        .fade-in { animation: fadeIn 0.4s ease-out; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        
+        .sugg-chip { 
+            transition: all 0.2s;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+        }
+        .sugg-chip:active { transform: scale(0.95); }
+        .input-field { @apply transition duration-150 ease-in-out; }
+        .input-error { @apply border-red-500 ring-red-200 ring-4 dark:ring-red-900/40; }
+        
+        .input-group-btn {
+            @apply bg-primary text-white px-3 text-sm font-bold active:scale-95 transition-colors hover:bg-blue-700;
+            flex-shrink: 0; 
+        }
+        
+        .menu-item { @apply w-full text-left p-3 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-700 font-medium flex items-center gap-3 transition dark:text-gray-200 text-gray-700; }
+        .input-field { @apply w-full p-3 bg-gray-50 dark:bg-gray-700 rounded-xl border border-gray-200 dark:border-gray-600 focus:outline-none focus:ring-2 focus:ring-primary dark:text-white transition; }
+        .quick-btn { @apply bg-gray-100 dark:bg-gray-700 py-2 rounded-lg text-sm font-bold dark:text-white hover:bg-gray-200 dark:hover:bg-gray-600 transition; }
+        .modal-content { @apply bg-white dark:bg-dark-card rounded-2xl w-full max-w-sm p-6 shadow-2xl scale-95 opacity-0 transition-all duration-300; }
+        .sugg-chip { @apply flex-shrink-0 px-4 py-2 bg-white dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-full text-sm font-medium hover:bg-primary/10 dark:hover:bg-gray-600 hover:border-primary transition shadow-sm active:scale-95 dark:text-gray-200; }
+
+        .history-item-detail {
+            @apply bg-white dark:bg-gray-700 p-3 rounded-xl shadow-sm flex justify-between items-center transition duration-200 hover:shadow-md border border-gray-100 dark:border-gray-600;
+        }
+
+        /* * NEW CALC STYLE: 
+        * Clean, Minimal, Dark-friendly, Inspired by Modern Mobile Calcs
+        */
+        .calc-btn { 
+            @apply w-full aspect-square text-2xl font-bold rounded-xl active:opacity-80 transition duration-100 shadow-md; 
+        }
+        .calc-digit { 
+            @apply bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-200 hover:bg-gray-300 dark:hover:bg-gray-600; 
+        }
+        .calc-operator { 
+            @apply bg-primary/80 text-white dark:bg-primary/60 dark:text-white hover:bg-primary/90 dark:hover:bg-primary/70; 
+        }
+        .calc-misc { 
+             @apply bg-gray-300 dark:bg-gray-600 text-gray-800 dark:text-gray-200 hover:bg-gray-400 dark:hover:bg-gray-500;
+        }
+        
+        /* Tagging Styling */
+        .tag-pill { @apply px-3 py-1 bg-yellow-100 dark:bg-yellow-900/30 text-yellow-800 dark:text-yellow-300 text-xs font-bold rounded-full; }
+        
+        /* Note Item Analysis Style */
+        .note-item-analyzed { @apply p-3 bg-white dark:bg-gray-700 rounded-lg shadow-sm flex justify-between items-center transition hover:shadow-md cursor-pointer border-l-4 border-primary dark:border-blue-400; }
+        /* CUSTOM STYLE FOR NOTE ITEMS WHEN ANALYZED (FEATURED RED BORDER) */
+        .note-item-manual { @apply border-l-4 border-red-500 dark:border-red-400; } 
+    </style>
+</head>
+<body class="bg-slate-50 text-slate-800 dark:bg-dark-bg dark:text-dark-text min-h-screen pb-28 transition-colors duration-300">
+
+    <div class="bg-primary shadow-lg sticky top-0 z-50 px-4 py-3 flex justify-between items-center transition-colors duration-300">
+        <div class="flex items-center gap-2">
+            <button id="globalBackBtn" onclick="goBack()" class="hidden text-white/90 w-8 h-8 rounded-full hover:bg-blue-700/50 transition"><i class="fas fa-arrow-left text-xl"></i></button>
+            <h1 class="font-bold text-xl text-white transition-all" id="pageTitle">
+                <i class="fas fa-cart-shopping mr-1 text-white"></i>স্মার্ট বাজার
+            </h1>
+        </div>
+        <div class="flex items-center gap-3">
+            <button onclick="toggleDarkMode()" class="w-9 h-9 rounded-full bg-blue-700 flex items-center justify-center text-yellow-300 transition transform active:scale-95 shadow-inner">
+                <i class="fas fa-moon" id="themeIcon"></i>
+            </button>
+            <button onclick="toggleMenu()" class="text-white p-2 active:scale-95 transition"><i class="fas fa-bars text-xl"></i></button>
+        </div>
+    </div>
+
+    <div id="sidebar" class="fixed inset-y-0 left-0 w-72 bg-white dark:bg-dark-card shadow-2xl transform -translate-x-full transition-transform duration-300 z-[60]">
+        <div class="p-6 bg-gradient-to-br from-primary to-secondary text-white flex flex-col">
+            <h2 class="font-bold text-2xl mb-1">আসসালামু আলাইকুম 👋</h2>
+            <p class="text-lg font-medium" id="menuUserName">বন্ধু</p>
+            <p class="text-xs opacity-80 mt-2">ভার্সন ৫.০ (আল্টিমেট ফিচার)</p>
+        </div>
+        <nav class="p-4 space-y-2 max-h-[80vh] overflow-y-auto scrollbar-hide">
+            <button onclick="editProfile(); toggleMenu()" class="menu-item"><i class="fas fa-user-edit text-primary w-8"></i> ১. নাম পরিবর্তন</button>
+            <button onclick="openWalletModal(); toggleMenu()" class="menu-item"><i class="fas fa-wallet text-green-500 w-8"></i> ২. ব্যালেন্স অ্যাড</button>
+            <button onclick="goToWishlistPage(); toggleMenu()" class="menu-item"><i class="fas fa-heart text-pink-500 w-8"></i> ৩. পরে কিনব</button>
+            <button onclick="goToHistoryPage(); toggleMenu()" class="menu-item"><i class="fas fa-clock-rotate-left text-purple-500 w-8"></i> ৪. পূর্বের হিসাব</button>
+            <div class="h-px bg-gray-200 dark:bg-gray-700 my-2"></div>
+
+            <button onclick="showPage('notepad'); toggleMenu(); renderNotepad();" class="menu-item"><i class="fas fa-note-sticky text-indigo-500 w-8"></i> ৫. স্মার্ট নোটপ্যাড</button>
+            
+            <h4 class="text-xs font-bold text-gray-400 uppercase pt-2">আল্টিমেট টুলস</h4>
+            <button onclick="showPage('calculator'); toggleMenu();" class="menu-item"><i class="fas fa-calculator text-yellow-500 w-8"></i> ৬. জেনারেল ক্যালকুলেটর</button>
+            <button onclick="showPage('stats'); toggleMenu(); renderStats();" class="menu-item"><i class="fas fa-chart-pie text-red-500 w-8"></i> ৭. মাস শেষে রিপোর্ট</button>
+            <button onclick="openBudgetModal(); toggleMenu()" class="menu-item"><i class="fas fa-bell text-indigo-500 w-8"></i> ৮. মাসিক বাজেট সেট</button>
+            <button onclick="showPage('price-tracker'); toggleMenu(); renderPriceTracker();" class="menu-item"><i class="fas fa-tags text-cyan-500 w-8"></i> ৯. প্রাইস ট্র্যাকার</button>
+            <button onclick="openCategoryManager(); toggleMenu()" class="menu-item"><i class="fas fa-list-check text-orange-500 w-8"></i> ১০. ক্যাটাগরি ম্যানেজমেন্ট</button>
+
+            <div class="h-px bg-gray-200 dark:bg-gray-700 my-2"></div>
+
+            <h4 class="text-xs font-bold text-gray-400 uppercase pt-2">ডেটা ও সেটিং</h4>
+            <button onclick="exportData()" class="menu-item"><i class="fas fa-file-export text-green-500 w-8"></i> ১১. ডেটা এক্সপোর্ট (JSON)</button>
+            <button onclick="importDataModal()" class="menu-item"><i class="fas fa-file-import text-blue-500 w-8"></i> ১২. ডেটা ইমপোর্ট</button>
+            <button onclick="alert('ভবিষ্যত ফিচার: আপনার আইটেমগুলি ক্লাউডে ব্যাকআপ নিতে Firebase সিঙ্ক ব্যবহার করুন।')" class="menu-item"><i class="fas fa-sync-alt text-gray-500 w-8"></i> ১৩. ফায়ারবেস সিঙ্ক (Mock)</button>
+            <button onclick="alert('অ্যাপটির ভার্সন ৫.০, আল্টিমেট ফিচার সেট। ডিজাইন: Gemini.')" class="menu-item"><i class="fas fa-info-circle text-gray-400 w-8"></i> ১৪. অ্যাপ সম্পর্কে</button>
+            <div class="h-px bg-gray-200 dark:bg-gray-700 my-2"></div>
+            <button onclick="resetAll()" class="menu-item text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20"><i class="fas fa-trash-alt w-8"></i> সব রিসেট</button>
+        </nav>
+    </div>
+    <div id="overlay" onclick="toggleMenu()" class="fixed inset-0 bg-black/50 hidden z-[55] backdrop-blur-sm"></div>
+
+    <div id="view-home" class="page-section container mx-auto max-w-lg p-4 fade-in block">
+        
+        <p class="text-sm text-gray-500 dark:text-gray-400 mb-2 font-medium" id="currentDateDisplay"></p>
+
+        <div class="balance-card bg-gradient-to-r from-primary to-secondary text-white rounded-2xl p-6 shadow-2xl mb-6 relative overflow-hidden transition-all duration-500 group">
+            <div class="relative z-10 flex justify-between items-center">
+                <div>
+                    <p class="text-xs opacity-80 font-medium tracking-wider mb-1">অবশিষ্ট ব্যালেন্স</p>
+                    <h2 class="text-4xl font-bold" id="currentBalance">৳ ০</h2>
+                </div>
+                <div class="text-right">
+                    <p class="text-xs opacity-80 mb-1">আজকের খরচ</p>
+                    <p class="text-xl font-bold text-yellow-300" id="todaySpent">৳ ০</p>
+                </div>
+            </div>
+            <div id="budgetBarContainer" class="mt-4 pt-3 border-t border-white/30 hidden">
+                 <p class="text-xs opacity-90 font-medium flex justify-between">
+                     <span>মাসিক বাজেট: <span id="budgetAmountText">৳ ০</span></span>
+                     <span id="budgetRemainingText"></span>
+                 </p>
+                 <div class="w-full bg-white/20 h-2 rounded-full mt-1 overflow-hidden">
+                     <div id="budgetProgressBar" class="h-2 bg-yellow-300 transition-all duration-500" style="width: 0%;"></div>
+                 </div>
+            </div>
+
+            <div class="absolute -right-6 -bottom-6 w-32 h-32 bg-white/10 rounded-full blur-2xl group-hover:scale-110 transition duration-700"></div>
+        </div>
+
+        <div class="bg-white dark:bg-dark-card p-5 rounded-2xl shadow-xl border border-gray-100 dark:border-gray-700 mb-6">
+            
+            <div class="flex gap-3 mb-4">
+                <div class="w-2/3">
+                    <label class="text-xs font-bold text-gray-500 dark:text-gray-400 mb-1 block">ক্যাটাগরি বাছাই করুন</label>
+                    <select id="itemCategory" onchange="renderSuggestions(); autoSuggestPrice();" class="w-full p-3 bg-blue-50 dark:bg-gray-800 border-none rounded-xl text-primary dark:text-blue-300 font-bold focus:ring-2 focus:ring-primary outline-none appearance-none cursor-pointer">
+                        </select>
+                </div>
+                <div class="w-1/3">
+                    <label class="text-xs font-bold text-gray-500 dark:text-gray-400 mb-1 block">আইকন</label>
+                    <button id="iconPickerBtn" onclick="openIconModal()" class="w-full h-12 bg-gray-100 dark:bg-gray-700 text-3xl rounded-xl flex items-center justify-center border border-gray-200 dark:border-gray-600 transition active:scale-95">
+                        <span id="selectedIcon">🛒</span>
+                    </button>
+                </div>
+            </div>
+
+            <div class="mb-5">
+                <label class="text-xs font-bold text-gray-400">জনপ্রিয় আইটেম (ক্লিক করুন)</label>
+                <div class="flex gap-2 overflow-x-auto scrollbar-hide py-2" id="suggestionContainer">
+                    </div>
+            </div>
+
+            <div class="space-y-4">
+                
+                <div class="relative">
+                    <input type="text" id="itemName" oninput="autoSuggestPrice()" class="input-field w-full p-3 bg-gray-50 dark:bg-gray-700 rounded-xl border border-gray-200 dark:border-gray-600 focus:outline-none focus:ring-2 focus:ring-primary dark:text-white transition pl-10 pr-10" placeholder="পণ্যের নাম লিখুন...">
+                    <span class="absolute left-3.5 top-3.5 text-gray-400"><i class="fas fa-tag"></i></span>
+                    <button onclick="clearInput('itemName')" class="absolute right-3.5 top-3.5 text-gray-400 hover:text-red-500 transition"><i class="fas fa-times"></i></button>
+                </div>
+                
+                <div class="relative">
+                    <input type="text" id="itemTags" class="input-field w-full p-3 pl-10" placeholder="ট্যাগ যোগ করুন (#জরুরি, #সপ্তাহের)">
+                    <span class="absolute left-3.5 top-3.5 text-gray-400"><i class="fas fa-hashtag"></i></span>
+                    <button onclick="alert('ভবিষ্যত ফিচার: কথা বলে পণ্যের নাম ইনপুট দিন।')" class="absolute right-3.5 top-3.5 text-gray-400 hover:text-primary transition"><i class="fas fa-microphone"></i></button>
+                </div>
+
+                <div class="flex gap-3">
+                    <div class="w-1/2">
+                        <label class="text-xs font-bold text-gray-500 dark:text-gray-400 mb-1 block">দাম (৳) প্রতি ইউনিট</label>
+                        <div class="relative">
+                            <input type="number" id="unitPrice" class="input-field w-full p-3 pl-8 font-bold text-primary" placeholder="০" oninput="calculateLive()">
+                            <span class="absolute left-3 top-3.5 text-primary font-bold">৳</span>
+                        </div>
+                        <div id="priceMemory" class="text-[10px] text-center w-full mt-1 bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-300 px-2 py-0.5 rounded-lg hidden cursor-pointer transition-all hover:bg-yellow-200" onclick="applySuggestedPrice()"></div>
+                    </div>
+
+                    <div class="w-1/2">
+                        <label class="text-xs font-bold text-gray-500 dark:text-gray-400 mb-1 block">পরিমাণ (সংখ্যা/ওজন)</label>
+                        <div class="flex shadow-md rounded-xl overflow-hidden">
+                            <input type="number" id="weight" step="0.01" class="input-field rounded-none border-0 font-bold text-secondary focus:ring-0" placeholder="০" oninput="calculateLive()">
+                            <button onclick="cycleWeightUnit()" class="input-group-btn" id="weightUnit">কেজি</button>
+                        </div>
+                        <div class="flex gap-1 mt-1">
+                            <button onclick="quickWeightChange(0.25)" class="quick-btn w-1/3">+০.২৫</button>
+                            <button onclick="quickWeightChange(0.5)" class="quick-btn w-1/3">+০.৫</button>
+                            <button onclick="quickWeightChange(1)" class="quick-btn w-1/3">+১</button>
+                        </div>
+                    </div>
+                </div>
+                <div class="flex justify-between items-center bg-gray-50 dark:bg-gray-800 p-3 rounded-xl border border-dashed border-gray-300 dark:border-gray-600">
+                    <span class="text-sm text-gray-500 font-bold">মোট খরচ:</span>
+                    <span class="text-2xl font-bold text-primary dark:text-blue-400" id="liveCost">৳ ০</span>
+                </div>
+
+                <div class="pt-2 border-t dark:border-gray-700">
+                    <label class="text-xs font-bold text-gray-500 mb-1 block">দোকানদারকে দিলেন (অপশনাল)</label>
+                    <div class="flex gap-3 items-center">
+                        <input type="number" id="givenAmount" class="flex-1 p-3 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-yellow-500 dark:text-white" placeholder="কত টাকা দিলেন?" oninput="calculateLive()">
+                        
+                        <div id="changeBadge" class="hidden px-4 py-2 rounded-xl text-center min-w-[100px] transition-all duration-300">
+                            <p class="text-[10px] font-bold uppercase tracking-wider" id="changeLabel">ফেরত</p>
+                            <p class="text-lg font-bold" id="changeAmount">৳ ০</p>
+                        </div>
+                        </div>
+                </div>
+
+                <button onclick="addItem()" class="w-full bg-gradient-to-r from-primary to-secondary text-white font-bold py-4 rounded-xl hover:shadow-lg hover:shadow-primary/40 active:scale-95 transition flex justify-center items-center gap-2 text-lg">
+                    <i class="fas fa-plus-circle"></i> লিস্টে যোগ করুন
+                </button>
+            </div>
+        </div>
+
+        <div class="mb-28">
+            <h3 class="font-bold text-gray-700 dark:text-gray-300 mb-3 flex items-center justify-between">
+                <span>
+                    <span class="bg-primary/20 dark:bg-primary/40 text-primary dark:text-white w-6 h-6 flex items-center justify-center rounded-full text-xs inline-flex mr-2" id="itemCount">0</span>
+                    বর্তমান কেনাকাটার তালিকা
+                </span>
+                <div class="flex items-center gap-2">
+                    <button onclick="cycleSort()" id="sortBtn" class="text-sm font-medium text-gray-500 dark:text-gray-400 hover:text-primary transition"><i class="fas fa-sort"></i> সর্ট</button>
+                    <button onclick="toggleFilter()" id="filterBtn" class="text-sm font-medium text-gray-500 dark:text-gray-400"><i class="fas fa-filter"></i> সার্চ</button>
+                </div>
+            </h3>
+            
+            <input type="text" id="listSearch" oninput="renderHome()" class="input-field w-full p-3 mb-3 hidden transition-all duration-300" placeholder="🔍 বর্তমান লিস্টে খুঁজুন...">
+
+            <div id="currentList" class="space-y-3 min-h-[100px]">
+                <div class="text-center py-10 opacity-50">
+                    <i class="fas fa-basket-shopping text-4xl mb-2 text-gray-300 dark:text-gray-600"></i>
+                    <p class="text-gray-400 text-sm">লিস্ট এখনো খালি</p>
+                </div>
+            </div>
+        </div>
+
+        <div id="checkoutBar" class="fixed bottom-0 left-0 w-full bg-white dark:bg-dark-card p-4 border-t border-gray-100 dark:border-gray-700 shadow-[0_-10px_40px_rgba(0,0,0,0.1)] hidden z-40 rounded-t-3xl backdrop-blur-lg bg-opacity-90 dark:bg-opacity-95">
+            <div class="container mx-auto max-w-lg flex items-center gap-4">
+                <div class="flex-1">
+                    <p class="text-[10px] text-gray-500 dark:text-gray-400 font-bold uppercase tracking-wider">সর্বমোট বিল</p>
+                    <p class="text-2xl font-bold text-primary dark:text-blue-400" id="footerTotal">৳ ০</p>
+                </div>
+                <button onclick="confirmCheckout()" class="flex-1 bg-gradient-to-r from-primary to-secondary text-white font-bold py-3.5 rounded-xl shadow-lg shadow-primary/30 dark:shadow-none active:scale-95 transition flex justify-center items-center gap-2">
+                    হিসাব শেষ <span class="text-sm" id="footerItemCount">(০)</span> <i class="fas fa-check"></i>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <div id="view-calculator" class="page-section container mx-auto max-w-lg p-4 hidden">
+        <h2 class="text-2xl font-bold dark:text-white mb-4">🧮 জেনারেল ক্যালকুলেটর</h2>
+        <div class="bg-white dark:bg-dark-card p-4 rounded-xl shadow-xl">
+            <div class="text-right mb-4">
+                <p id="calcHistory" class="text-gray-500 dark:text-gray-400 text-sm h-5"></p>
+                <p id="calcDisplay" class="text-4xl font-extrabold dark:text-white h-12 truncate">0</p>
+            </div>
+            
+            <div class="grid grid-cols-4 gap-3">
+                <button onclick="calcClearAll()" class="calc-btn calc-misc text-red-500 dark:text-red-400">AC</button>
+                <button onclick="calcDelete()" class="calc-btn calc-misc"><i class="fas fa-backspace"></i></button>
+                <button onclick="calcInput('%')" class="calc-btn calc-misc">%</button>
+                <button onclick="calcOperator('/')" class="calc-btn calc-operator">÷</button>
+                
+                <button onclick="calcInput('7')" class="calc-btn calc-digit">৭</button>
+                <button onclick="calcInput('8')" class="calc-btn calc-digit">৮</button>
+                <button onclick="calcInput('9')" class="calc-btn calc-digit">৯</button>
+                <button onclick="calcOperator('*')" class="calc-btn calc-operator">×</button>
+                
+                <button onclick="calcInput('4')" class="calc-btn calc-digit">৪</button>
+                <button onclick="calcInput('5')" class="calc-btn calc-digit">৫</button>
+                <button onclick="calcInput('6')" class="calc-btn calc-digit">৬</button>
+                <button onclick="calcOperator('-')" class="calc-btn calc-operator">-</button>
+                
+                <button onclick="calcInput('1')" class="calc-btn calc-digit">১</button>
+                <button onclick="calcInput('2')" class="calc-btn calc-digit">২</button>
+                <button onclick="calcInput('3')" class="calc-btn calc-digit">৩</button>
+                <button onclick="calcOperator('+')" class="calc-btn calc-operator">+</button>
+                
+                <button onclick="calcInput('0')" class="calc-btn calc-digit col-span-2">০</button>
+                <button onclick="calcInput('.')" class="calc-btn calc-digit">.</button>
+                <button onclick="calcCalculate()" class="calc-btn calc-operator">=</button> 
+            </div>
+        </div>
+    </div>
+    
+    <div id="view-notepad" class="page-section container mx-auto max-w-lg p-4 hidden">
+        <h2 class="text-2xl font-bold dark:text-white mb-4">📝 স্মার্ট নোটপ্যাড</h2>
+        
+        <div class="bg-white dark:bg-dark-card p-4 rounded-xl shadow-xl mb-6">
+            <textarea id="notepadInput" oninput="analyzeNoteLive()" class="input-field w-full h-32 p-3 resize-none font-medium dark:text-white" placeholder="রুই ২ কেজি&#10;লাল শাক ১ কেজি&#10;ডিম ১ ডজন" rows="4"></textarea>
+            
+            <div id="analysisSummary" class="text-sm text-gray-500 dark:text-gray-400 mt-2">
+                <p>⚠️ প্রতি লাইন একটি নতুন আইটেম। (যেমন: আইটেম [পরিমাণ] [একক])</p>
+                <p class="font-bold">✨ অটোপুরণ: <span id="mockCorrectionStatus" class="text-primary">সক্রিয় (বানান সংশোধন মক)</span></p>
+            </div>
+            
+            <button onclick="saveNote()" class="w-full bg-secondary text-white font-bold py-3 rounded-xl hover:shadow-lg mt-4 active:scale-95 transition flex justify-center items-center gap-2">
+                <i class="fas fa-save"></i> নোট সেভ করুন
+            </button>
+        </div>
+
+        <div class="mb-28">
+            <h3 class="font-bold text-gray-700 dark:text-gray-300 mb-3 flex items-center justify-between">
+                <span>
+                    <span class="bg-secondary/20 dark:bg-secondary/40 text-secondary dark:text-white w-6 h-6 flex items-center justify-center rounded-full text-xs inline-flex mr-2" id="noteCount">0</span>
+                    সেভ করা নোট
+                </span>
+                <select id="noteMonthFilter" onchange="renderNotepad()" class="text-sm font-medium text-gray-500 dark:text-gray-400 bg-transparent outline-none border rounded-lg p-1 dark:border-gray-700">
+                    <option value="all">সব মাস</option>
+                    </select>
+            </h3>
+
+            <div id="savedNotesContainer" class="space-y-3">
+                </div>
+        </div>
+    </div>
+    
+    <div id="view-stats" class="page-section container mx-auto max-w-lg p-4 hidden">
+        <h2 class="text-2xl font-bold dark:text-white mb-4">📈 মাস শেষে রিপোর্ট</h2>
+        <div class="bg-white dark:bg-dark-card p-4 rounded-xl shadow-xl mb-6">
+            <h3 class="text-lg font-bold mb-3 dark:text-white">খরচের ক্যাটাগরি বিশ্লেষণ</h3>
+            <div class="h-64">
+                <canvas id="categoryChart"></canvas>
+            </div>
+            <div id="statsSummary" class="mt-4 space-y-1">
+                </div>
+        </div>
+    </div>
+    
+    <div id="view-price-tracker" class="page-section container mx-auto max-w-lg p-4 hidden">
+        <h2 class="text-2xl font-bold dark:text-white mb-4">🏷️ প্রাইস ট্র্যাকার</h2>
+        <div class="bg-white dark:bg-dark-card p-4 rounded-xl shadow-xl mb-6">
+            <p class="text-sm text-gray-500 dark:text-gray-400 mb-4">আপনার কেনা আইটেমগুলির গড় দাম এবং দামের পরিবর্তন দেখুন।</p>
+            <div id="priceTrackerContainer" class="space-y-4">
+                </div>
+        </div>
+    </div>
+
+    <div id="view-wishlist" class="page-section container mx-auto max-w-lg p-4 hidden">
+        <h2 class="text-2xl font-bold dark:text-white mb-4">🛒 পরে কিনব</h2>
+        <div id="wishlistContainer" class="space-y-3 pb-20"></div>
+    </div>
+
+    <div id="view-history" class="page-section container mx-auto max-w-lg p-4 hidden">
+        <div class="bg-white dark:bg-dark-card p-4 rounded-xl shadow-sm mb-4 sticky top-20 z-30">
+            <input type="text" id="historySearch" oninput="renderHistory()" class="input-field w-full p-3 border-none outline-none dark:text-white" placeholder="🔍 তারিখ বা পণ্যের নাম দিয়ে খুঁজুন...">
+        </div>
+        <div id="historyContainer" class="space-y-3 pb-20"></div>
+    </div>
+
+    <div id="view-history-detail" class="page-section container mx-auto max-w-lg p-4 hidden">
+        <div id="historyDetailHeader" class="bg-white dark:bg-dark-card p-4 rounded-xl shadow-sm mb-4 sticky top-20 z-30">
+            </div>
+        <div id="historyDetailList" class="space-y-3 pb-20">
+            </div>
+    </div>
+
+    <div id="walletModal" class="fixed inset-0 bg-black/60 hidden z-[70] flex items-center justify-center p-4 backdrop-blur-sm">
+        <div class="modal-content" id="walletModalContent">
+            <h3 class="text-xl font-bold text-center mb-1 dark:text-white">ব্যালেন্স আপডেট</h3>
+            <p class="text-xs text-center text-gray-400 mb-6">আপনার পকেটে এখন কত টাকা আছে?</p>
+            
+            <input type="number" id="walletInput" class="w-full text-center text-4xl font-bold p-4 border-b-2 border-primary focus:outline-none dark:bg-transparent dark:text-white mb-6" placeholder="0">
+            
+            <div class="grid grid-cols-3 gap-2 mb-6">
+                <button onclick="setWallet(500)" class="quick-btn">৳ ৫০০</button>
+                <button onclick="setWallet(1000)" class="quick-btn">৳ ১০০০</button>
+                <button onclick="setWallet(2000)" class="quick-btn">৳ ২০০০</button>
+            </div>
+            <button onclick="saveWallet()" class="w-full bg-primary text-white font-bold py-3 rounded-xl shadow-lg">সেভ করুন</button>
+        </div>
+    </div>
+    
+    <div id="iconModal" class="fixed inset-0 bg-black/60 hidden z-[70] flex items-center justify-center p-4 backdrop-blur-sm">
+        <div class="modal-content" id="iconModalContent">
+            <h3 class="text-xl font-bold text-center mb-4 dark:text-white">আইকন বাছাই করুন</h3>
+            <div id="iconGrid" class="grid grid-cols-6 gap-2 text-3xl max-h-64 overflow-y-auto p-2 bg-gray-50 dark:bg-gray-800 rounded-lg">
+                </div>
+            <button onclick="closeIconModal()" class="w-full bg-gray-200 dark:bg-gray-700 font-bold py-2 mt-4 rounded-xl">বন্ধ করুন</button>
+        </div>
+    </div>
+
+    <div id="editModal" class="fixed inset-0 bg-black/60 hidden z-[70] flex items-center justify-center p-4 backdrop-blur-sm">
+        <div class="modal-content" id="editModalContent">
+            <h3 class="text-xl font-bold text-center mb-4 dark:text-white">আইটেম এডিট করুন</h3>
+            <input type="hidden" id="editItemId">
+            
+            <div class="space-y-4">
+                <input type="text" id="editItemName" class="input-field w-full p-3" placeholder="পণ্যের নাম">
+                <input type="text" id="editItemTags" class="input-field w-full p-3" placeholder="ট্যাগ যোগ করুন">
+                
+                <div class="relative">
+                    <input type="number" id="editUnitPrice" class="input-field w-full p-3 pl-8 font-bold text-primary" placeholder="দাম (৳)" oninput="calculateEditLive()">
+                    <span class="absolute left-3 top-3.5 text-primary font-bold">৳</span>
+                </div>
+                
+                <div class="flex shadow-md rounded-xl overflow-hidden">
+                    <input type="number" id="editWeight" step="0.01" class="input-field rounded-none border-0 font-bold text-secondary focus:ring-0" placeholder="পরিমাণ" oninput="calculateEditLive()">
+                    <button id="editWeightUnit" onclick="cycleEditUnit()" class="input-group-btn">কেজি</button>
+                </div>
+
+                <div class="flex justify-between items-center bg-gray-50 dark:bg-gray-800 p-3 rounded-xl">
+                    <span class="text-sm font-bold">মোট:</span>
+                    <span class="text-xl font-bold text-primary dark:text-blue-400" id="editLiveCost">৳ ০</span>
+                </div>
+            </div>
+
+            <button onclick="saveEditedItem()" class="w-full bg-primary text-white font-bold py-3 rounded-xl shadow-lg mt-4">সেভ করুন</button>
+        </div>
+    </div>
+
+    <div id="budgetModal" class="fixed inset-0 bg-black/60 hidden z-[70] flex items-center justify-center p-4 backdrop-blur-sm">
+        <div class="modal-content" id="budgetModalContent">
+            <h3 class="text-xl font-bold text-center mb-1 dark:text-white">💰 মাসিক বাজেট সেট</h3>
+            <p class="text-xs text-center text-gray-400 mb-6">এই মাসে সর্বোচ্চ কত টাকা খরচ করতে চান?</p>
+            
+            <input type="number" id="budgetInput" class="w-full text-center text-4xl font-bold p-4 border-b-2 border-green-500 focus:outline-none dark:bg-transparent dark:text-white mb-6" placeholder="0">
+            
+            <button onclick="saveBudget()" class="w-full bg-green-500 text-white font-bold py-3 rounded-xl shadow-lg">বাজেট সেভ করুন</button>
+            <button onclick="clearBudget()" class="w-full bg-transparent text-red-500 font-bold py-2 mt-2">বাজেট মুছে ফেলুন</button>
+        </div>
+    </div>
+    
+    <div id="categoryModal" class="fixed inset-0 bg-black/60 hidden z-[70] flex items-center justify-center p-4 backdrop-blur-sm">
+        <div class="modal-content max-w-md" id="categoryModalContent">
+            <h3 class="text-xl font-bold text-center mb-4 dark:text-white">ক্যাটাগরি ম্যানেজমেন্ট</h3>
+            
+            <div id="currentCategories" class="space-y-2 max-h-40 overflow-y-auto mb-4 p-2 border rounded-lg dark:border-gray-700">
+                </div>
+            
+            <h4 class="text-sm font-bold dark:text-gray-300 mt-4 mb-2">নতুন ক্যাটাগরি যোগ করুন:</h4>
+            <div class="flex gap-2">
+                <input type="text" id="newCategoryName" class="input-field flex-1" placeholder="নাম (যেমন: ইলেক্ট্রনিক্স)">
+                <input type="text" id="newCategoryIcon" class="input-field w-16 text-center" placeholder="আইকন">
+                <input type="color" id="newCategoryColor" value="#ff0000" class="w-10 h-10 rounded-lg cursor-pointer">
+            </div>
+            <button onclick="addNewCategory()" class="w-full bg-primary text-white font-bold py-3 rounded-xl shadow-lg mt-4">যোগ করুন</button>
+
+            <button onclick="closeCategoryManager()" class="w-full bg-gray-200 dark:bg-gray-700 font-bold py-2 mt-4 rounded-xl">বন্ধ করুন</button>
+        </div>
+    </div>
+    
+    <div id="importModal" class="fixed inset-0 bg-black/60 hidden z-[70] flex items-center justify-center p-4 backdrop-blur-sm">
+        <div class="modal-content max-w-md" id="importModalContent">
+            <h3 class="text-xl font-bold text-center mb-4 dark:text-white">ডেটা ইমপোর্ট</h3>
+            <p class="text-sm text-gray-600 dark:text-gray-400 mb-4">আপনার JSON ডেটা এখানে পেস্ট করুন। বর্তমান ডেটা মুছে যাবে।</p>
+            <textarea id="importJsonArea" class="w-full h-40 input-field font-mono text-sm resize-none" placeholder="JSON ডেটা এখানে পেস্ট করুন..."></textarea>
+            <button onclick="importData()" class="w-full bg-red-500 text-white font-bold py-3 rounded-xl shadow-lg mt-4">ইমপোর্ট করুন</button>
+            <button onclick="document.getElementById('importModal').classList.add('hidden')" class="w-full bg-gray-200 dark:bg-gray-700 font-bold py-2 mt-2 rounded-xl">বাতিল</button>
+        </div>
+    </div>
+    
+    <div id="notepadDetailModal" class="fixed inset-0 bg-black/60 hidden z-[70] flex items-center justify-center p-4 backdrop-blur-sm">
+        <div class="modal-content max-w-md" id="notepadDetailModalContent">
+            <h3 class="text-xl font-bold text-center mb-4 dark:text-white" id="notepadDetailTitle"></h3>
+            
+            <div id="notepadItemList" class="space-y-3 max-h-64 overflow-y-auto p-2 border rounded-lg dark:border-gray-700 mb-4">
+                </div>
+            
+            <p class="text-xs text-center text-gray-500 dark:text-gray-400 mb-4">💡 প্রতিটি আইটেম যাচাই করে **"বর্তমান লিস্টে যোগ করুন"**-এ ক্লিক করুন।</p>
+            
+            <div class="flex gap-2">
+                <button onclick="closeNotepadDetailModal()" class="flex-1 bg-gray-200 dark:bg-gray-700 font-bold py-3 rounded-xl">বন্ধ করুন</button>
+                <button onclick="addNoteItemsToCart()" class="flex-1 bg-primary text-white font-bold py-3 rounded-xl flex items-center justify-center gap-2">
+                    <i class="fas fa-cart-plus"></i> বর্তমান লিস্টে যোগ করুন
+                </button>
+            </div>
+        </div>
+    </div>
+
+
+    <div id="undoToast" class="fixed bottom-28 left-1/2 transform -translate-x-1/2 bg-gray-800 text-white px-5 py-3 rounded-full shadow-xl flex items-center gap-4 z-50 hidden transition-all">
+        <span class="text-sm">মুছে ফেলা হয়েছে</span>
+        <button onclick="undoDelete()" class="text-yellow-400 font-bold text-sm uppercase">ফিরিয়ে আনুন</button>
+    </div>
+
+    <div id="confirmModal" class="fixed inset-0 bg-black/60 hidden z-[70] flex items-center justify-center p-4 backdrop-blur-sm">
+        <div class="modal-content" id="confirmModalContent">
+            <h3 class="text-xl font-bold text-center mb-4 dark:text-white">💰 হিসাবের চূড়ান্ত সারসংক্ষেপ</h3>
+            
+            <div class="bg-gray-50 dark:bg-gray-800 p-4 rounded-xl mb-4 space-y-2 font-bold">
+                <div class="flex justify-between items-center text-lg text-gray-800 dark:text-gray-200">
+                    <span>মোট বিল:</span> <span id="checkoutTotal">৳ ০</span>
+                </div>
+                <div class="flex justify-between items-center text-gray-800 dark:text-gray-200">
+                    <span>দোকানদারকে দিলেন:</span> <span id="checkoutGiven">৳ ০</span>
+                </div>
+                <div class="h-px bg-gray-300 dark:bg-gray-700 my-1"></div>
+                <div class="flex justify-between items-center text-xl pt-1" id="checkoutChangeRow">
+                    <span class="text-lg font-bold">ফেরত পাবেন:</span> <span id="checkoutChange" class="font-extrabold">৳ ০</span>
+                </div>
+            </div>
+
+            <h4 class="text-sm font-bold text-gray-700 dark:text-gray-300 mb-2">আপনার কেনাকাটা:</h4>
+            <div id="checkoutItemList" class="max-h-32 overflow-y-auto space-y-1 p-2 bg-white dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg shadow-inner">
+                </div>
+            
+            <p class="text-xs text-center text-gray-500 dark:text-gray-400 mt-4 mb-4">পেমেন্ট নিশ্চিত করলে এটি আপনার ব্যালেন্স থেকে কাটা হবে।</p>
+
+            <div class="flex gap-4">
+                <button onclick="closeConfirmModal()" class="flex-1 bg-gray-200 dark:bg-gray-700 font-bold py-3 rounded-xl">বাতিল</button>
+                <button onclick="performCheckout()" class="flex-1 bg-primary text-white font-bold py-3 rounded-xl">পেমেন্ট নিশ্চিত করুন</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // --- GLOBAL DATA & STATE MANAGEMENT ---
+        let items = [];
+        let wishlist = JSON.parse(localStorage.getItem('sb5_wishlist')) || [];
+        let deletedItem = null, undoTimer = null;
+        let weightUnit = 'KG'; // 'KG' or 'PCS'
+        let wallet = parseFloat(localStorage.getItem('sb5_wallet')) || 0;
+        let history = JSON.parse(localStorage.getItem('sb5_history')) || [];
+        let notes = JSON.parse(localStorage.getItem('sb5_notes')) || []; // NEW: Notepad data
+        let userName = localStorage.getItem('sb5_user') || 'বন্ধু';
+        let isDarkMode = localStorage.getItem('sb5_theme') === 'dark';
+        let selectedIcon = localStorage.getItem('sb5_default_icon') || '🛒';
+        let priceMemory = JSON.parse(localStorage.getItem('sb5_price_memory')) || {};
+        let currentSort = 'default'; // 'default', 'name-asc', 'cost-desc'
+        let monthlyBudget = parseFloat(localStorage.getItem('sb5_budget')) || 0;
+        
+        let appCategories = JSON.parse(localStorage.getItem('sb5_categories')) || {
+            'মাছ/মাংস': { icon: '🍗', color: '#ff6384' },
+            'শাকসবজি': { icon: '🥦', color: '#36a2eb' },
+            'মুদি': { icon: '🧂', color: '#ff9f40' },
+            'অন্যান্য': { icon: '🛍️', color: '#9966ff' }
+        };
+        
+        // Calculator State
+        let calcCurrentInput = '0';
+        let calcExpression = '';
+        let calcResultReady = false; // NEW: To handle consecutive calculations without =
+
+        // New state variable to manage current view
+        let currentPage = 'home'; // 'home', 'wishlist', 'history', 'history-detail', 'calculator', 'stats', 'price-tracker', 'notepad'
+        let currentParsedNoteItems = []; // To hold analyzed items before adding to cart
+
+        // --- CONSTANTS & UTILS ---
+        const emojiIcons = ['🛒', '📝', '📌', '🍎', '🥕', '🥩', '🍚', '🥛', '🧺', '🧼', '💊', '🔋', '📚', '⚽', '🔑', '🏠', '🎁', '🎂', '🎈', '🎉', '💻', '🚗', '💊', '👕', '👠', '🍺', '☕', '🍫', '🍕', '📺', '📱', '🔨', '🔩', '🌱', '☀️', '💧', '🌡️', '💡'];
+        const banglaDigits = ['০', '১', '২', '৩', '৪', '৫', '৬', '৭', '৮', '৯'];
+        const toBn = (num) => {
+            const numStr = num.toFixed(0).toLocaleString('en-US'); // Ensure no excessive decimals
+            return numStr.split('').map(c => banglaDigits[c] || c).join('');
+        };
+        const formatBnDate = (isoDate) => {
+            const date = new Date(isoDate);
+            const options = { year: 'numeric', month: 'long', day: 'numeric', weekday: 'long', hour: 'numeric', minute: 'numeric', second: 'numeric', hour12: true };
+            return date.toLocaleDateString('bn-BD', options);
+        };
+        const parseBnFloat = (str) => {
+            let numStr = str.split('').map(c => banglaDigits.indexOf(c) > -1 ? banglaDigits.indexOf(c) : c).join('');
+            return parseFloat(numStr.replace(/,/g, '')) || 0;
+        }
+
+        // --- INITIALIZATION ---
+        window.onload = () => {
+            if(isDarkMode) document.documentElement.classList.add('dark');
+            document.getElementById('themeIcon').className = isDarkMode ? 'fas fa-sun' : 'fas fa-moon';
+            
+            const savedCart = localStorage.getItem('sb5_cart');
+            if(savedCart) items = JSON.parse(savedCart);
+            if(wallet === 0) openWalletModal();
+            
+            document.getElementById('selectedIcon').innerText = selectedIcon;
+            
+            updateDateDisplay();
+            updateCategoryDropdown();
+            renderHome();
+            renderSuggestions();
+            populateIconModal();
+            updateBudgetDisplay();
+            populateNoteMonthFilter(); // NEW
+            
+            showPage(currentPage);
+        };
+        
+        // --- CATEGORY MANAGER (Feature 26) ---
+        function updateCategoryDropdown() {
+            const selectEl = document.getElementById('itemCategory');
+            selectEl.innerHTML = '';
+            
+            Object.keys(appCategories).forEach(catName => {
+                const option = document.createElement('option');
+                option.value = catName;
+                option.textContent = `${appCategories[catName].icon} ${catName}`;
+                selectEl.appendChild(option);
+            });
+            renderSuggestions();
+        }
+        
+        function openCategoryManager() {
+            renderCategoryList();
+            document.getElementById('categoryModal').classList.remove('hidden');
+            setTimeout(() => document.getElementById('categoryModalContent').classList.remove('opacity-0', 'scale-95'), 10);
+        }
+        
+        function closeCategoryManager() {
+            document.getElementById('categoryModal').classList.add('hidden');
+            document.getElementById('categoryModalContent').classList.add('opacity-0', 'scale-95');
+        }
+
+        function renderCategoryList() {
+            const container = document.getElementById('currentCategories');
+            container.innerHTML = '';
+            
+            Object.keys(appCategories).forEach(catName => {
+                const cat = appCategories[catName];
+                const div = document.createElement('div');
+                div.className = 'flex justify-between items-center p-2 rounded-lg bg-gray-50 dark:bg-gray-700';
+                div.innerHTML = `
+                    <div class="flex items-center gap-2">
+                        <span class="text-xl" style="color:${cat.color}">${cat.icon}</span>
+                        <span class="font-medium dark:text-white">${catName}</span>
+                    </div>
+                    <button onclick="deleteCategory('${catName}')" class="text-red-500 hover:text-red-700 text-sm"><i class="fas fa-trash-alt"></i></button>
+                `;
+                container.appendChild(div);
+            });
+        }
+        
+        function addNewCategory() {
+            const name = document.getElementById('newCategoryName').value.trim();
+            const icon = document.getElementById('newCategoryIcon').value.trim() || '❓';
+            const color = document.getElementById('newCategoryColor').value;
+            
+            if (name && !appCategories[name]) {
+                appCategories[name] = { icon, color };
+                localStorage.setItem('sb5_categories', JSON.stringify(appCategories));
+                updateCategoryDropdown();
+                renderCategoryList();
+                document.getElementById('newCategoryName').value = '';
+                document.getElementById('newCategoryIcon').value = '';
+            }
+        }
+        
+        function deleteCategory(catName) {
+            // Using console.log instead of alert/confirm due to sandbox restrictions
+            if(Object.keys(appCategories).length <= 1) {
+                console.error("কমপক্ষে একটি ক্যাটাগরি থাকতে হবে।");
+                return;
+            }
+            if(window.confirm(`আপনি কি নিশ্চিত যে আপনি ${catName} ক্যাটাগরিটি মুছে ফেলতে চান? এই ক্যাটাগরির আইটেমগুলি 'অন্যান্য'-তে চলে যাবে।`)) {
+                delete appCategories[catName];
+                localStorage.setItem('sb5_categories', JSON.stringify(appCategories));
+                updateCategoryDropdown();
+                renderCategoryList();
+            }
+        }
+
+        // --- CORE LOGIC ---
+
+        function quickWeightChange(amount) {
+            const weightInput = document.getElementById('weight');
+            let current = parseFloat(weightInput.value) || 0;
+            current += amount;
+            weightInput.value = current.toFixed(2);
+            calculateLive();
+        }
+        
+        function clearInput(id) {
+            document.getElementById(id).value = '';
+            if(id === 'itemName') calculateLive();
+        }
+        
+        function addItem() {
+            const name = document.getElementById('itemName').value.trim();
+            const tags = document.getElementById('itemTags').value.trim();
+            const cat = document.getElementById('itemCategory').value;
+            const p = parseFloat(document.getElementById('unitPrice').value);
+            const w = parseFloat(document.getElementById('weight').value);
+            const icon = document.getElementById('selectedIcon').innerText;
+            const given = parseFloat(document.getElementById('givenAmount').value) || 0;
+
+            let isValid = validateInput('itemName') & validateInput('unitPrice') & validateInput('weight');
+            if(!isValid) { navigator.vibrate?.(100); return; }
+
+            const cost = Math.round(p * w);
+            
+            // Add item to cart/list
+            items.unshift({
+                id: Date.now(),
+                name, cat, icon, p, w, cost, given, unit: weightUnit,
+                change: given > 0 ? given - cost : null, // Calculate change/return
+                tags: tags.split(/[\s,]+/).filter(tag => tag.startsWith('#') || tag.length > 0),
+                isPinned: false
+            });
+
+            // Update Price Memory
+            priceMemory[name] = p;
+            localStorage.setItem('sb5_price_memory', JSON.stringify(priceMemory));
+            
+            // Reset Fields
+            document.getElementById('itemName').value = '';
+            document.getElementById('unitPrice').value = '';
+            document.getElementById('weight').value = '';
+            document.getElementById('givenAmount').value = '';
+            document.getElementById('itemTags').value = '';
+            document.getElementById('selectedIcon').innerText = localStorage.getItem('sb5_default_icon') || '🛒';
+            
+            calculateLive();
+            saveAndRender();
+            
+            document.getElementById('currentList').scrollTo({ top: 0, behavior: 'smooth' });
+            document.getElementById('itemName').focus();
+            navigator.vibrate?.(50);
+        }
+        
+        // --- LIST RENDERING (Features 16, 20, 23, 29) ---
+        
+        function cycleSort() {
+            if (currentSort === 'default') {
+                currentSort = 'name-asc';
+                document.getElementById('sortBtn').innerHTML = '<i class="fas fa-sort-alpha-down"></i> নাম A-Z';
+            } else if (currentSort === 'name-asc') {
+                currentSort = 'cost-desc';
+                document.getElementById('sortBtn').innerHTML = '<i class="fas fa-sort-amount-down-alt"></i> দাম বেশি';
+            } else {
+                currentSort = 'default';
+                document.getElementById('sortBtn').innerHTML = '<i class="fas fa-sort"></i> সর্ট';
+            }
+            renderHome();
+        }
+
+        function renderHome() {
+            const listSearchTerm = document.getElementById('listSearch').value.toLowerCase();
+            
+            // Separate pinned items
+            const pinnedItems = items.filter(item => item.isPinned);
+            let unpinnedItems = items.filter(item => !item.isPinned);
+
+            // Filter
+            unpinnedItems = unpinnedItems.filter(item => item.name.toLowerCase().includes(listSearchTerm) || (item.tags && item.tags.some(t => t.toLowerCase().includes(listSearchTerm))));
+
+            // Sort (Feature 16)
+            if (currentSort === 'name-asc') {
+                unpinnedItems.sort((a, b) => a.name.localeCompare(b.name, 'bn'));
+            } else if (currentSort === 'cost-desc') {
+                unpinnedItems.sort((a, b) => b.cost - a.cost);
+            }
+            
+            const totalItems = [...pinnedItems, ...unpinnedItems];
+            
+            const total = totalItems.reduce((a, b) => a + b.cost, 0);
+            const bal = wallet - total;
+
+            document.getElementById('menuUserName').innerText = userName;
+            document.getElementById('currentBalance').innerText = '৳ ' + toBn(bal);
+            document.getElementById('todaySpent').innerText = '৳ ' + toBn(total);
+            document.getElementById('footerTotal').innerText = '৳ ' + toBn(total);
+            document.getElementById('itemCount').innerText = toBn(items.length);
+            document.getElementById('footerItemCount').innerText = '(' + toBn(items.length) + ')';
+
+            // Dynamic Balance Card Color
+            const card = document.querySelector('.balance-card');
+            card.classList.remove('from-red-600', 'to-pink-600', 'from-primary', 'to-secondary');
+            card.classList.add(bal < 0 ? 'from-red-600' : 'from-primary', bal < 0 ? 'to-pink-600' : 'to-secondary');
+            
+            // Update Budget Info
+            updateBudgetDisplay(total);
+
+            const listEl = document.getElementById('currentList');
+            const footer = document.getElementById('checkoutBar');
+            listEl.innerHTML = '';
+
+            if(items.length === 0) {
+                listEl.innerHTML = `<div class="text-center py-10 opacity-50 fade-in"><i class="fas fa-basket-shopping text-4xl mb-2 text-gray-300 dark:text-gray-600"></i><p class="text-gray-400 text-sm">লিস্ট এখনো খালি</p></div>`;
+                footer.classList.add('hidden');
+            } else {
+                footer.classList.remove('hidden');
+                
+                totalItems.forEach(item => {
+                    const catInfo = appCategories[item.cat] || appCategories['অন্যান্য'];
+                    const catColor = catInfo.color;
+                    
+                    // Change Info (UPDATED to show given amount/change)
+                    let changeHtml = '';
+                    if (item.given > 0) {
+                        const isPlus = item.change >= 0;
+                        changeHtml = `<span class="text-[10px] ${isPlus ? 'text-green-600 bg-green-50' : 'text-red-500 bg-red-50'} px-1 rounded ml-1 border dark:bg-transparent dark:border-gray-600">ফেরত: ${toBn(Math.abs(item.change))}</span>`;
+                        changeHtml += `<span class="text-[10px] text-gray-500 bg-gray-100 px-1 rounded ml-1 border dark:bg-transparent dark:border-gray-600">দিলেন: ${toBn(item.given)}</span>`;
+                    }
+                    
+                    // Tags (Feature 19)
+                    let tagsHtml = item.tags && item.tags.length > 0 
+                        ? item.tags.map(tag => `<span class="tag-pill mr-1">${tag}</span>`).join('') 
+                        : '';
+                    
+                    // Pin Icon (Feature 23)
+                    const pinClass = item.isPinned ? 'text-yellow-500' : 'text-gray-300';
+
+                    const div = document.createElement('div');
+                    // Feature 20: Category Color Code
+                    div.className = `bg-white dark:bg-gray-800 p-4 rounded-xl shadow-md border-l-4 transition hover:shadow-xl fade-in relative`;
+                    div.style.borderLeftColor = catColor;
+                    
+                    div.innerHTML = `
+                        <button onclick="togglePin(${item.id})" class="absolute top-2 right-2 text-sm ${pinClass} hover:text-yellow-600 transition"><i class="fas fa-thumbtack"></i></button>
+
+                        <div class="flex items-center gap-3 w-4/5">
+                            <div class="w-10 h-10 rounded-full text-xl flex items-center justify-center bg-gray-100 dark:bg-gray-700">${item.icon}</div>
+                            <div class="truncate">
+                                <p class="font-bold text-gray-800 dark:text-gray-200 leading-tight">${item.name} ${changeHtml}</p>
+                                <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5">${toBn(item.w)} ${item.unit} x ৳${toBn(item.p)}</p>
+                                <div class="mt-1">${tagsHtml}</div>
+                            </div>
+                        </div>
+                        <div class="absolute right-4 bottom-4 flex items-center gap-2">
+                            <span class="font-bold text-lg text-gray-700 dark:text-gray-300">৳ ${toBn(item.cost)}</span>
+                            <div class="flex gap-1">
+                                <button onclick="duplicateItem(${item.id})" title="Duplicate" class="w-7 h-7 rounded-full text-gray-400 hover:bg-blue-50 hover:text-blue-600 transition"><i class="fas fa-copy text-xs"></i></button>
+                                <button onclick="openEditModal(${item.id})" title="Edit" class="w-7 h-7 rounded-full text-gray-400 hover:bg-yellow-50 hover:text-yellow-600 transition"><i class="fas fa-edit text-xs"></i></button>
+                                <button onclick="moveToWishlist(${item.id})" title="Buy Later" class="w-7 h-7 rounded-full text-gray-400 hover:bg-pink-50 hover:text-pink-600 transition"><i class="fas fa-heart text-xs"></i></button>
+                                <button onclick="deleteItem(${item.id})" title="Delete" class="w-7 h-7 rounded-full text-gray-400 hover:bg-red-50 hover:text-red-500 transition"><i class="fas fa-times text-xs"></i></button>
+                            </div>
+                        </div>
+                    `;
+                    listEl.appendChild(div);
+                });
+            }
+        }
+        
+        function togglePin(id) {
+            const item = items.find(i => i.id === id);
+            if(item) {
+                item.isPinned = !item.isPinned;
+                saveAndRender();
+            }
+        }
+
+        function duplicateItem(id) {
+            const originalItem = items.find(i => i.id === id);
+            if (originalItem) {
+                const duplicated = {
+                    ...originalItem,
+                    id: Date.now(),
+                    isPinned: false // Duplicates are not pinned by default
+                };
+                items.unshift(duplicated);
+                saveAndRender();
+            }
+        }
+        
+        // --- BUDGET TRACKER (Feature 6) ---
+        function updateBudgetDisplay(currentTotal = items.reduce((a, b) => a + b.cost, 0)) {
+            const barContainer = document.getElementById('budgetBarContainer');
+            if (monthlyBudget > 0) {
+                barContainer.classList.remove('hidden');
+                document.getElementById('budgetAmountText').innerText = '৳ ' + toBn(monthlyBudget);
+                
+                const spentPercentage = (currentTotal / monthlyBudget) * 100;
+                const remaining = monthlyBudget - currentTotal;
+                
+                const progressBar = document.getElementById('budgetProgressBar');
+                progressBar.style.width = `${Math.min(spentPercentage, 100)}%`;
+                
+                progressBar.classList.remove('bg-yellow-300', 'bg-red-500');
+                if (spentPercentage > 90) {
+                    progressBar.classList.add('bg-red-500');
+                    document.getElementById('budgetRemainingText').innerText = '⚠️ বাজেট শেষের পথে';
+                } else if (spentPercentage > 60) {
+                    progressBar.classList.add('bg-yellow-300');
+                    document.getElementById('budgetRemainingText').innerText = `আর আছে: ৳ ${toBn(remaining)}`;
+                } else {
+                    progressBar.classList.add('bg-yellow-300');
+                    document.getElementById('budgetRemainingText').innerText = `আর আছে: ৳ ${toBn(remaining)}`;
+                }
+            } else {
+                barContainer.classList.add('hidden');
+            }
+        }
+
+        function openBudgetModal() {
+            document.getElementById('budgetModal').classList.remove('hidden');
+            setTimeout(() => document.getElementById('budgetModalContent').classList.remove('opacity-0', 'scale-95'), 10);
+            if(monthlyBudget > 0) document.getElementById('budgetInput').value = monthlyBudget;
+        }
+
+        function saveBudget() {
+            const b = parseFloat(document.getElementById('budgetInput').value);
+            if(b >= 0) { 
+                monthlyBudget = b; 
+                localStorage.setItem('sb5_budget', monthlyBudget); 
+                document.getElementById('budgetModal').classList.add('hidden'); 
+                updateBudgetDisplay();
+                renderHome(); 
+            }
+        }
+        
+        function clearBudget() {
+            monthlyBudget = 0;
+            localStorage.removeItem('sb5_budget');
+            document.getElementById('budgetModal').classList.add('hidden'); 
+            updateBudgetDisplay();
+            renderHome(); 
+        }
+
+        // --- GENERAL CALCULATOR (Feature 1 - Updated Logic) ---
+        function calcInput(val) {
+             if (calcResultReady) {
+                calcCurrentInput = (val === '.') ? '0.' : val;
+                calcExpression = '';
+                calcResultReady = false;
+            } else if (calcCurrentInput === '0' && val !== '.') {
+                calcCurrentInput = val;
+            } else {
+                // Prevent multiple decimals
+                if (val === '.' && calcCurrentInput.includes('.')) return;
+                calcCurrentInput += val;
+            }
+            
+            // Live calculation (only if it forms a valid expression)
+            calcLiveCalculate(); 
+            
+            calcDisplay.innerText = toBn(parseBnFloat(calcCurrentInput));
+        }
+
+        function calcOperator(op) {
+            if (calcCurrentInput === '0' && calcExpression === '') return;
+            
+            // First, calculate the current expression if possible
+            if (calcExpression !== '' && ['+', '-', '*', '/'].includes(calcExpression.slice(-1))) {
+                // Replace previous operator if one exists
+                calcExpression = calcExpression.slice(0, -1) + op;
+            } else {
+                calcExpression += calcCurrentInput + op;
+            }
+
+            calcCurrentInput = '0';
+            calcDisplay.innerText = '০';
+            calcResultReady = false;
+            
+            // Live calculation
+            calcLiveCalculate();
+        }
+
+        function calcClearAll() {
+            calcCurrentInput = '0';
+            calcExpression = '';
+            calcDisplay.innerText = '০';
+            calcHistory.innerText = '';
+            calcResultReady = false;
+        }
+
+        function calcDelete() {
+            if (calcCurrentInput !== '0') {
+                calcCurrentInput = calcCurrentInput.slice(0, -1);
+                if (calcCurrentInput === '') calcCurrentInput = '0';
+            } else if (calcExpression !== '') {
+                // If the display is 0, delete the last char of the expression
+                calcExpression = calcExpression.slice(0, -1);
+                // Try to recover the last number if an operator was deleted
+                const match = calcExpression.match(/(\d+\.?\d*)$/);
+                 if (match) {
+                    calcCurrentInput = match[1];
+                    calcExpression = calcExpression.slice(0, -match[1].length);
+                }
+            }
+            
+             // Live calculation
+            calcLiveCalculate();
+            
+            calcDisplay.innerText = toBn(parseBnFloat(calcCurrentInput));
+            calcHistory.innerText = calcExpression.replace(/\*/g, '×').replace(/\//g, '÷') + (calcCurrentInput !== '0' ? calcCurrentInput : '');
+        }
+
+        // NEW: Function for Live Calculation (without clicking '=')
+        function calcLiveCalculate() {
+            try {
+                let expression = (calcExpression + calcCurrentInput)
+                    .replace(/×/g, '*')
+                    .replace(/÷/g, '/');
+                    
+                // Clean up expression before evaluation
+                if (expression.endsWith('+') || expression.endsWith('-') || expression.endsWith('*') || expression.endsWith('/')) {
+                    expression = expression.slice(0, -1);
+                }
+
+                if (expression.length === 0) {
+                     calcHistory.innerText = ''; 
+                     return;
+                }
+                
+                // Safety check and evaluation
+                const result = eval(expression);
+                
+                // Update history with the intermediate result
+                calcHistory.innerText = (calcExpression + calcCurrentInput).replace(/\*/g, '×').replace(/\//g, '÷') + ' = ' + toBn(result);
+                
+            } catch (e) {
+                // Keep the current expression in history if it's invalid (e.g., '5+*')
+                calcHistory.innerText = (calcExpression + calcCurrentInput).replace(/\*/g, '×').replace(/\//g, '÷');
+            }
+        }
+        
+        function calcCalculate() {
+             try {
+                let expression = (calcExpression + calcCurrentInput)
+                    .replace(/×/g, '*')
+                    .replace(/÷/g, '/');
+                
+                if (expression.length === 0) return;
+                
+                const result = eval(expression);
+                
+                // Update state
+                calcHistory.innerText = (calcExpression + calcCurrentInput).replace(/\*/g, '×').replace(/\//g, '÷') + ' =';
+                calcCurrentInput = result.toString();
+                calcExpression = '';
+                calcDisplay.innerText = toBn(result);
+                calcResultReady = true;
+
+            } catch (e) {
+                calcDisplay.innerText = 'ত্রুটি';
+                calcCurrentInput = '0';
+                calcExpression = '';
+            }
+        }
+        
+        // --- SMART NOTEPAD (NEW PAGE - CRITICAL UPDATES HERE) ---
+        
+        // Utility to find best matching category and icon for an item name
+        function findCategoryAndIcon(itemName) {
+            const nameLower = itemName.toLowerCase();
+            let bestCat = 'অন্যান্য';
+            let bestIcon = appCategories['অন্যান্য'].icon;
+            
+            // Check suggestions for a match
+            for (const catName in suggestions) {
+                const catSuggestions = suggestions[catName];
+                for (const item of catSuggestions) {
+                    if (nameLower.includes(item.name.toLowerCase())) {
+                        return { cat: catName, icon: item.icon };
+                    }
+                }
+            }
+            // Check categories by name for a match (fallback)
+             for (const catName in appCategories) {
+                if (nameLower.includes(catName.toLowerCase())) {
+                    return { cat: catName, icon: appCategories[catName].icon };
+                }
+            }
+            
+            return { cat: bestCat, icon: bestIcon };
+        }
+
+        // Mock correction - Placeholder for a real-time spelling correction API
+        function mockAutoCorrect(text) {
+             // Example mock replacements for common errors in Bengali
+            const corrections = {
+                'রুই': 'রুই মাছ',
+                'শাক': 'লাল শাক', // *** USER REQUEST: "লাল সাক যে গুলো লিখ্ যেমন দেখায় এমন হয়ে যাবে"
+                'ডজন': 'ডিম',
+                'আলু': 'আলু',
+                'কেজি': 'কেজি',
+                'পিস': 'পিস'
+            };
+            
+            let corrected = text;
+            
+            for (const [wrong, right] of Object.entries(corrections)) {
+                const regex = new RegExp(`\\b${wrong}\\b`, 'g');
+                corrected = corrected.replace(regex, right);
+            }
+            return corrected;
+        }
+
+        // Core parsing logic
+        function analyzeNoteLive() {
+            const rawText = document.getElementById('notepadInput').value;
+            const lines = rawText.split('\n').filter(line => line.trim() !== '');
+            currentParsedNoteItems = [];
+            
+            lines.forEach((line, index) => {
+                let name = line.trim();
+                let quantity = 1;
+                let unit = 'PCS';
+                
+                let isManual = false; // Flag for items that need attention (e.g., the "লাল শাক" specific request)
+                
+                // Mock Auto-Correction
+                const correctedName = mockAutoCorrect(name);
+                name = correctedName;
+                
+                // Check for the specific user request item to mark it as manual/special
+                if (name.includes('লাল শাক')) {
+                    isManual = true;
+                }
+
+                // Regex to find quantity and unit (e.g., "আলু 2 কেজি", "ডিম 10 পিস", "চাল")
+                // Matches: [Space][Number][Optional Space][Unit] at the end
+                const match = name.match(/(\d+\.?\d*)\s*(কেজি|পিস|ডজন|লিটার|gm)?$/i);
+                
+                if (match) {
+                    quantity = parseFloat(match[1]) || 1;
+                    unit = (match[2] || 'PCS').toUpperCase().replace('GM', 'KG'); // Standardize units
+                    name = name.substring(0, match.index).trim();
+                }
+
+                // Standardize unit text for display/storage
+                const unitMap = { 'কেজি': 'KG', 'পিস': 'PCS', 'ডজন': 'PCS', 'লিটার': 'KG', 'GM': 'KG', 'KG': 'KG', 'PCS': 'PCS' };
+                unit = unitMap[unit] || 'PCS';
+                
+                const { cat, icon } = findCategoryAndIcon(name);
+
+                currentParsedNoteItems.push({
+                    id: index,
+                    raw: line,
+                    name: name || 'অজানা আইটেম',
+                    w: quantity,
+                    unit: unit,
+                    cat: cat,
+                    icon: icon,
+                    p: priceMemory[name] || 0, // Use price memory if available
+                    cost: Math.round(quantity * (priceMemory[name] || 0)), // Calculate cost (mock)
+                    isManual: isManual // Apply the flag
+                });
+            });
+            
+            // Re-render modal content to show live analysis if the modal is open
+            if (!document.getElementById('notepadDetailModal').classList.contains('hidden')) {
+                 renderNotepadDetailModal(currentParsedNoteItems);
+            }
+        }
+        
+        function saveNote() {
+            const rawText = document.getElementById('notepadInput').value.trim();
+            if (!rawText) return;
+            
+            // 1. Process/Analyze the note content
+            analyzeNoteLive(); 
+            
+            // 2. Save the note with its analyzed items
+            notes.unshift({
+                id: Date.now(),
+                date: new Date().toISOString(),
+                content: rawText,
+                items: currentParsedNoteItems // Save the analyzed items for quick access
+            });
+            
+            localStorage.setItem('sb5_notes', JSON.stringify(notes));
+            
+            // 3. Clear input and re-render the list
+            document.getElementById('notepadInput').value = ''; 
+            
+            renderNotepad();
+            
+            // 4. Open the detail modal for immediate action (Add to Cart)
+            // This is crucial for the user flow after saving.
+            openNotepadDetailModal(notes[0].id); // Open the newly saved note
+            
+            navigator.vibrate?.(50);
+        }
+
+        function renderNotepad() {
+            populateNoteMonthFilter(); // Ensure months are updated
+            const filterMonth = document.getElementById('noteMonthFilter').value;
+            const container = document.getElementById('savedNotesContainer');
+            container.innerHTML = '';
+            
+            const filteredNotes = notes.filter(note => {
+                if (filterMonth === 'all') return true;
+                const noteDate = new Date(note.date);
+                const monthYear = `${noteDate.getFullYear()}-${noteDate.getMonth()}`;
+                return monthYear === filterMonth;
+            });
+            
+            document.getElementById('noteCount').innerText = toBn(filteredNotes.length);
+
+            if (filteredNotes.length === 0) {
+                 container.innerHTML = `<div class="text-center py-10 opacity-50 fade-in"><i class="fas fa-list-alt text-4xl mb-2 text-gray-300 dark:text-gray-600"></i><p class="text-gray-400 text-sm">এই মাসে কোনো নোট সেভ করা নেই।</p></div>`;
+                 return;
+            }
+
+            filteredNotes.forEach(note => {
+                const dateText = formatBnDate(note.date);
+                const itemsSummary = note.items.map(i => `${i.icon} ${i.name} (${toBn(i.w)} ${i.unit})`).join(', ').substring(0, 100);
+                
+                const div = document.createElement('div');
+                div.className = 'note-item-analyzed fade-in';
+                div.onclick = () => openNotepadDetailModal(note.id);
+                
+                div.innerHTML = `
+                    <div class="w-11/12 truncate">
+                        <p class="font-bold dark:text-white">${dateText.split(',')[0]} <span class="text-xs text-gray-500 font-normal">(${dateText.split(',')[1].trim()})</span></p>
+                        <p class="text-sm text-gray-600 dark:text-gray-400 mt-1 truncate">${itemsSummary}</p>
+                    </div>
+                    <button onclick="event.stopPropagation(); deleteNote(${note.id})" class="text-red-500 hover:text-red-700 text-sm p-1 ml-2"><i class="fas fa-trash-alt"></i></button>
+                `;
+                container.appendChild(div);
+            });
+            
+        }
+        
+        function deleteNote(id) {
+             if(window.confirm("আপনি কি নিশ্চিত এই নোটটি মুছে ফেলতে চান?")) {
+                notes = notes.filter(n => n.id !== id);
+                localStorage.setItem('sb5_notes', JSON.stringify(notes));
+                renderNotepad();
+            }
+        }
+        
+        function populateNoteMonthFilter() {
+            const selectEl = document.getElementById('noteMonthFilter');
+            const currentFilter = selectEl.value;
+            selectEl.innerHTML = '<option value="all">সব মাস</option>';
+            
+            const months = {};
+            notes.forEach(note => {
+                const date = new Date(note.date);
+                const monthYearKey = `${date.getFullYear()}-${date.getMonth()}`;
+                const monthName = date.toLocaleDateString('bn-BD', { year: 'numeric', month: 'long' });
+                months[monthYearKey] = monthName;
+            });
+            
+            // Sort keys descending
+            const sortedMonths = Object.keys(months).sort((a, b) => new Date(b.replace('-', '/1/')) - new Date(a.replace('-', '/1/')));
+
+            sortedMonths.forEach(key => {
+                const option = document.createElement('option');
+                option.value = key;
+                option.textContent = months[key];
+                if (key === currentFilter) option.selected = true;
+                selectEl.appendChild(option);
+            });
+        }
+        
+        function openNotepadDetailModal(id) {
+            const note = notes.find(n => n.id === id);
+            if (!note) return;
+            
+            currentParsedNoteItems = note.items; // Load saved analysis
+            
+            document.getElementById('notepadDetailTitle').innerText = formatBnDate(note.date).split(',')[0] + ' থেকে আইটেম';
+            renderNotepadDetailModal(currentParsedNoteItems);
+            
+            document.getElementById('notepadDetailModal').classList.remove('hidden');
+            setTimeout(() => document.getElementById('notepadDetailModalContent').classList.remove('opacity-0', 'scale-95'), 10);
+        }
+        
+        function renderNotepadDetailModal(items) {
+            const listEl = document.getElementById('notepadItemList');
+            listEl.innerHTML = '';
+            
+            items.forEach(item => {
+                const div = document.createElement('div');
+                div.className = 'flex justify-between items-center p-2 rounded-lg bg-gray-50 dark:bg-gray-800';
+                
+                // *** USER REQUEST: Red Border for specific item
+                if (item.isManual) {
+                     div.classList.add('note-item-manual'); // Red border for "লাল শাক"
+                     div.classList.remove('bg-gray-50');
+                     div.classList.add('bg-red-50', 'dark:bg-red-900/10');
+                } else {
+                     div.classList.remove('note-item-manual');
+                }
+                
+                // Show analysis details
+                const priceText = item.p > 0 ? `৳ ${toBn(item.p)}` : '❓দাম নেই';
+                
+                div.innerHTML = `
+                    <div class="flex items-center gap-2">
+                        <span class="text-xl">${item.icon}</span>
+                        <div class="truncate">
+                            <p class="font-bold dark:text-white leading-tight">${item.name} ${item.isManual ? '<span class="text-red-500 text-xs font-normal">(বিশেষ আইটেম)</span>' : ''}</p>
+                            <p class="text-xs text-gray-500">${toBn(item.w)} ${item.unit} @ ${priceText}</p>
+                        </div>
+                    </div>
+                `;
+                listEl.appendChild(div);
+            });
+        }
+        
+        function closeNotepadDetailModal() {
+            document.getElementById('notepadDetailModal').classList.add('hidden');
+            document.getElementById('notepadDetailModalContent').classList.add('opacity-0', 'scale-95');
+        }
+        
+        function addNoteItemsToCart() {
+             // Convert parsed items into cart items
+             // *** USER REQUEST: Notepad থেকে ইনপুট করলে Category সব কিছু বাদ হয়ে যাবে
+            currentParsedNoteItems.forEach(parsedItem => {
+                // Only add if name is not empty
+                if (parsedItem.name && parsedItem.name !== 'অজানা আইটেম') {
+                    // Find the default category for reset
+                    const defaultCategory = 'অন্যান্য';
+                    const defaultIcon = appCategories[defaultCategory] ? appCategories[defaultCategory].icon : '🛍️';
+                    
+                    items.unshift({
+                        id: Date.now() + Math.random(), // Ensure unique ID
+                        name: parsedItem.name,
+                        cat: defaultCategory, // Set to default category
+                        icon: defaultIcon, // Set to default icon
+                        p: parsedItem.p, // Last remembered price or 0
+                        w: parsedItem.w,
+                        cost: Math.round(parsedItem.w * parsedItem.p),
+                        given: 0,
+                        unit: parsedItem.unit,
+                        change: null,
+                        tags: [], // Clear tags
+                        isPinned: false
+                    });
+                }
+            });
+            
+            saveAndRender();
+            closeNotepadDetailModal();
+            showPage('home'); // Go back to home page
+        }
+
+        // --- REMAINING UTILS (Copied/Adjusted from old code) ---
+        function updateDateDisplay() {
+            const options = { year: 'numeric', month: 'long', day: 'numeric', weekday: 'long' };
+            const today = new Date().toLocaleDateString('bn-BD', options);
+            document.getElementById('currentDateDisplay').innerText = `আজ: ${today}`;
+        }
+        function autoSuggestPrice() {
+            const name = document.getElementById('itemName').value.trim();
+            const memoryEl = document.getElementById('priceMemory');
+            if (name && priceMemory[name]) {
+                const lastPrice = priceMemory[name];
+                memoryEl.innerHTML = `গতবার কেনা হয়েছিল: ৳ ${toBn(lastPrice)} (ক্লিক করে ব্যবহার করুন)`;
+                memoryEl.classList.remove('hidden');
+                memoryEl.dataset.price = lastPrice;
+            } else {
+                memoryEl.classList.add('hidden');
+            }
+        }
+        function applySuggestedPrice() {
+            const price = document.getElementById('priceMemory').dataset.price;
+            document.getElementById('unitPrice').value = price;
+            calculateLive();
+        }
+        function renderSuggestions() {
+            const cat = document.getElementById('itemCategory').value;
+            const container = document.getElementById('suggestionContainer');
+            const list = suggestions[cat] || [];
+            
+            container.innerHTML = list.map(item => `
+                <button onclick="fillForm('${item.name}', '${item.icon}')" class="sugg-chip">
+                    ${item.icon} ${item.name}
+                </button>
+            `).join('');
+            
+            container.classList.remove('fade-in');
+            void container.offsetWidth; 
+            container.classList.add('fade-in');
+        }
+        function fillForm(name, icon) {
+            document.getElementById('itemName').value = name;
+            document.getElementById('selectedIcon').innerText = icon;
+            document.getElementById('unitPrice').value = ''; 
+            document.getElementById('weight').focus();
+            autoSuggestPrice();
+            navigator.vibrate?.(20);
+        }
+        function cycleWeightUnit() {
+            weightUnit = weightUnit === 'KG' ? 'PCS' : 'KG';
+            document.getElementById('weightUnit').innerText = weightUnit === 'KG' ? 'কেজি' : 'পিস';
+            calculateLive();
+        }
+        
+        // ** CRITICAL UPDATE: Calculate cost, given amount, and change/return **
+        function calculateLive() {
+            const p = parseFloat(document.getElementById('unitPrice').value) || 0;
+            const w = parseFloat(document.getElementById('weight').value) || 0;
+            const cost = Math.round(p * w);
+            
+            document.getElementById('liveCost').innerText = '৳ ' + toBn(cost);
+
+            const given = parseFloat(document.getElementById('givenAmount').value) || 0;
+            const badge = document.getElementById('changeBadge');
+            
+            // Show change badge only if a given amount or cost is entered
+            if (given > 0 || cost > 0) {
+                badge.classList.remove('hidden');
+                const diff = given - cost;
+                
+                document.getElementById('changeAmount').innerText = '৳ ' + toBn(Math.abs(diff));
+                
+                if (diff >= 0) {
+                    badge.className = 'px-4 py-2 rounded-xl text-center min-w-[100px] transition-all duration-300 bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400 border border-green-200 dark:border-green-800';
+                    document.getElementById('changeLabel').innerText = 'ফেরত পাবেন';
+                } else {
+                    badge.className = 'px-4 py-2 rounded-xl text-center min-w-[100px] transition-all duration-300 bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400 border border-red-200 dark:border-red-800';
+                    document.getElementById('changeLabel').innerText = 'আরো লাগবে';
+                }
+            } else {
+                badge.classList.add('hidden');
+            }
+        }
+        // ** END CRITICAL UPDATE **
+        
+        function validateInput(id) {
+            const input = document.getElementById(id);
+            if (!input.value) {
+                input.classList.add('input-error');
+                return false;
+            }
+            input.classList.remove('input-error');
+            return true;
+        }
+        function showPage(pageId) {
+            document.querySelectorAll('.page-section').forEach(el => el.classList.add('hidden'));
+            document.getElementById(`view-${pageId}`).classList.remove('hidden');
+            currentPage = pageId;
+
+            const backBtn = document.getElementById('globalBackBtn');
+            backBtn.classList.toggle('hidden', pageId === 'home');
+            
+            const titleMap = {
+                'home': '<i class="fas fa-cart-shopping mr-1 text-white"></i>স্মার্ট বাজার',
+                'wishlist': 'পরে কিনব (Wishlist)',
+                'history': 'পূর্বের হিসাব',
+                'calculator': 'জেনারেল ক্যালকুলেটর',
+                'stats': 'মাস শেষে রিপোর্ট',
+                'price-tracker': 'প্রাইস ট্র্যাকার',
+                'notepad': 'স্মার্ট নোটপ্যাড'
+            };
+            document.getElementById('pageTitle').innerHTML = titleMap[pageId] || 'হিসাবের বিস্তারিত';
+        }
+        function goBack() {
+            if (currentPage === 'history-detail') {
+                showPage('history');
+                renderHistory();
+            } else if (currentPage !== 'home') {
+                showPage('home');
+                renderHome();
+            }
+        }
+        function goToHistoryPage() { toggleMenu(); showPage('history'); renderHistory(); }
+        function goToWishlistPage() { toggleMenu(); showPage('wishlist'); renderWishlist(); }
+        function renderHistory() {
+            const search = document.getElementById('historySearch').value.toLowerCase();
+            const container = document.getElementById('historyContainer');
+            container.innerHTML = '';
+            
+            const filtered = history.filter(h => {
+                const d = new Date(h.date).toLocaleDateString('bn-BD');
+                return d.includes(search) || h.items.some(i => i.name.toLowerCase().includes(search));
+            }).sort((a, b) => new Date(b.date) - new Date(a.date)); // Sort by date descending
+            
+            if (filtered.length === 0) {
+                 container.innerHTML = `<div class="text-center py-10 opacity-50 fade-in"><i class="fas fa-box-open text-4xl mb-2 text-gray-300 dark:text-gray-600"></i><p class="text-gray-400 text-sm">কোনো হিসাব পাওয়া যায়নি।</p></div>`;
+                 return;
+            }
+            filtered.forEach(h => {
+                const div = document.createElement('div');
+                div.onclick = () => openHistoryDetail(h.id); 
+                div.className = 'bg-white dark:bg-gray-800 p-4 rounded-xl border border-gray-100 dark:border-gray-700 shadow-sm transition hover:shadow-md cursor-pointer fade-in';
+                div.innerHTML = `
+                    <div class="flex justify-between items-center mb-1">
+                        <p class="font-bold text-gray-800 dark:text-gray-200">${formatBnDate(h.date).split(',')[0]}</p>
+                        <span class="font-bold text-primary dark:text-blue-400 text-2xl">৳ ${toBn(h.total)}</span>
+                    </div>
+                    <div class="flex justify-between items-center text-xs text-gray-500 dark:text-gray-400 mt-2">
+                        <span>${toBn(h.items.length)} টি আইটেম</span>
+                        <span class="font-medium text-primary hover:underline">বিস্তারিত দেখুন <i class="fas fa-arrow-right ml-1 text-sm"></i></span>
+                    </div>
+                `;
+                container.appendChild(div);
+            });
+        }
+        function openHistoryDetail(id) {
+            const entry = history.find(h => h.id === id);
+            if (!entry) return;
+            showPage('history-detail');
+            renderHistoryDetail(entry);
+        }
+        function renderHistoryDetail(entry) {
+            const headerEl = document.getElementById('historyDetailHeader');
+            const listEl = document.getElementById('historyDetailList');
+            listEl.innerHTML = '';
+            const dateParts = formatBnDate(entry.date).split(',');
+            document.getElementById('pageTitle').innerText = 'হিসাবের বিস্তারিত';
+            headerEl.innerHTML = `
+                <p class="text-xs text-gray-500 dark:text-gray-400 font-medium mb-1">${dateParts[0]}, ${dateParts[1]}</p>
+                <div class="flex justify-between items-end">
+                    <h2 class="text-3xl font-extrabold text-primary dark:text-blue-400">৳ ${toBn(entry.total)}</h2>
+                    <p class="text-sm font-medium text-gray-700 dark:text-gray-300">${dateParts[2].trim()}</p>
+                </div>
+                <div class="h-px bg-gray-200 dark:bg-gray-700 my-3"></div>
+                <p class="text-sm text-gray-600 dark:text-gray-400 font-bold">${toBn(entry.items.length)} টি আইটেমের তালিকা:</p>
+            `;
+            entry.items.forEach((item, index) => {
+                const div = document.createElement('div');
+                div.className = 'history-item-detail fade-in';
+                div.style.animationDelay = `${index * 50}ms`;
+
+                let changeBadge = '';
+                if (item.given > 0) {
+                    const isPlus = item.change >= 0;
+                    changeBadge = `<span class="ml-2 text-[10px] font-bold py-0.5 px-2 rounded-full ${isPlus ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'} dark:bg-opacity-20 dark:${isPlus ? 'text-green-300' : 'text-red-300'}">ফেরত: ৳ ${toBn(Math.abs(item.change))}</span>`;
+                }
+
+                div.innerHTML = `
+                    <div class="flex items-center gap-3 w-4/6">
+                        <div class="text-xl">${item.icon}</div>
+                        <div class="truncate">
+                            <p class="font-bold text-sm text-gray-800 dark:text-gray-200">${item.name}</p>
+                            <p class="text-xs text-gray-500 dark:text-gray-400">${toBn(item.w)} ${item.unit} x ৳${toBn(item.p)}</p>
+                        </div>
+                    </div>
+                    <div class="text-right flex flex-col items-end">
+                        <span class="font-extrabold text-lg text-secondary dark:text-purple-400">৳ ${toBn(item.cost)}</span>
+                        ${changeBadge}
+                    </div>
+                `;
+                listEl.appendChild(div);
+            });
+        }
+        function openEditModal(id) {
+            const item = items.find(i => i.id === id);
+            if (!item) return;
+            document.getElementById('editItemId').value = id;
+            document.getElementById('editItemName').value = item.name;
+            document.getElementById('editItemTags').value = item.tags ? item.tags.join(', ') : '';
+            document.getElementById('editUnitPrice').value = item.p;
+            document.getElementById('editWeight').value = item.w;
+            weightUnit = item.unit;
+            document.getElementById('editWeightUnit').innerText = item.unit === 'KG' ? 'কেজি' : 'পিস';
+            calculateEditLive();
+            document.getElementById('editModal').classList.remove('hidden');
+            setTimeout(() => document.getElementById('editModalContent').classList.remove('opacity-0', 'scale-95'), 10);
+        }
+        function cycleEditUnit() {
+            weightUnit = weightUnit === 'KG' ? 'PCS' : 'KG';
+            document.getElementById('editWeightUnit').innerText = weightUnit === 'KG' ? 'কেজি' : 'পিস';
+            calculateEditLive();
+        }
+        function calculateEditLive() {
+            const p = parseFloat(document.getElementById('editUnitPrice').value) || 0;
+            const w = parseFloat(document.getElementById('editWeight').value) || 0;
+            const cost = Math.round(p * w);
+            document.getElementById('editLiveCost').innerText = '৳ ' + toBn(cost);
+        }
+        
+        // ** CRITICAL UPDATE: Edit Save Fix **
+        function saveEditedItem() {
+            const id = parseInt(document.getElementById('editItemId').value);
+            const idx = items.findIndex(i => i.id === id);
+            
+            // Validate before proceeding to save
+            if (!document.getElementById('editItemName').value.trim() || !document.getElementById('editUnitPrice').value || !document.getElementById('editWeight').value) {
+                alert("দয়া করে পণ্যের নাম, দাম এবং পরিমাণ লিখুন।");
+                return;
+            }
+
+            if (idx > -1) {
+                const p = parseFloat(document.getElementById('editUnitPrice').value) || 0;
+                const w = parseFloat(document.getElementById('editWeight').value) || 0;
+                const tags = document.getElementById('editItemTags').value.trim();
+
+                items[idx].name = document.getElementById('editItemName').value.trim();
+                items[idx].tags = tags.split(/[\s,]+/).filter(tag => tag.startsWith('#') || tag.length > 0);
+                items[idx].p = p;
+                items[idx].w = w;
+                items[idx].unit = weightUnit;
+                items[idx].cost = Math.round(p * w);
+                
+                // Recalculate change based on the original given amount
+                const originalGiven = items[idx].given || 0;
+                items[idx].change = originalGiven > 0 ? originalGiven - items[idx].cost : null;
+                
+                priceMemory[items[idx].name] = p;
+                localStorage.setItem('sb5_price_memory', JSON.stringify(priceMemory));
+                
+                document.getElementById('editModal').classList.add('hidden');
+                document.getElementById('editModalContent').classList.add('opacity-0', 'scale-95');
+                
+                // *** FIX: Rerender to show changes and save to local storage ***
+                saveAndRender(); 
+            }
+        }
+        // ** END CRITICAL UPDATE **
+        
+        function moveToWishlist(id) {
+            const idx = items.findIndex(i => i.id === id);
+            if(idx > -1) {
+                const item = items.splice(idx, 1)[0];
+                wishlist.unshift(item);
+                localStorage.setItem('sb5_wishlist', JSON.stringify(wishlist));
+                saveAndRender();
+                console.log(`"${item.name}" আইটেমটি Buy Later লিস্টে যোগ করা হয়েছে।`);
+            }
+        }
+        function renderWishlist() {
+            const container = document.getElementById('wishlistContainer');
+            container.innerHTML = '';
+            if (wishlist.length === 0) {
+                container.innerHTML = `<div class="text-center py-10 opacity-50 fade-in"><i class="fas fa-heart-crack text-4xl mb-2 text-gray-300 dark:text-gray-600"></i><p class="text-gray-400 text-sm">আপনার Buy Later লিস্ট খালি।</p></div>`;
+                return;
+            }
+            wishlist.forEach(item => {
+                const div = document.createElement('div');
+                div.className = 'bg-white dark:bg-gray-800 p-4 rounded-xl shadow-md border border-gray-100 dark:border-gray-700 flex justify-between items-center group transition hover:shadow-xl fade-in';
+                div.innerHTML = `
+                    <div class="flex items-center gap-3 w-3/5">
+                        <div class="w-10 h-10 rounded-full bg-pink-50 dark:bg-pink-900/20 text-xl flex items-center justify-center">${item.icon}</div>
+                        <div class="truncate">
+                            <p class="font-bold text-gray-800 dark:text-gray-200 leading-tight">${item.name}</p>
+                            <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5">${toBn(item.w)} ${item.unit} (~৳${toBn(item.cost)})</p>
+                        </div>
+                    </div>
+                    <div class="flex gap-2">
+                         <button onclick="alert('ভবিষ্যত ফিচার: এই আইটেমটি কেনার জন্য রিমাইন্ডার সেট করুন।')" title="Set Reminder" class="w-8 h-8 rounded-full text-gray-400 hover:bg-purple-50 hover:text-purple-600 transition"><i class="fas fa-bell text-xs"></i></button>
+                        <button onclick="moveFromWishlist(${item.id})" title="Move to Cart" class="w-8 h-8 rounded-full text-gray-400 hover:bg-green-50 hover:text-green-600 transition"><i class="fas fa-cart-plus text-xs"></i></button>
+                        <button onclick="deleteFromWishlist(${item.id})" title="Delete" class="w-8 h-8 rounded-full text-gray-400 hover:bg-red-50 hover:text-red-500 transition"><i class="fas fa-times text-xs"></i></button>
+                    </div>
+                `;
+                container.appendChild(div);
+            });
+        }
+        function moveFromWishlist(id) {
+            const idx = wishlist.findIndex(i => i.id === id);
+            if(idx > -1) {
+                const item = wishlist.splice(idx, 1)[0];
+                items.unshift(item);
+                localStorage.setItem('sb5_wishlist', JSON.stringify(wishlist));
+                saveAndRender();
+                renderWishlist();
+            }
+        }
+        function deleteFromWishlist(id) {
+            const idx = wishlist.findIndex(i => i.id === id);
+            if(idx > -1) {
+                wishlist.splice(idx, 1);
+                localStorage.setItem('sb5_wishlist', JSON.stringify(wishlist));
+                renderWishlist();
+            }
+        }
+        function deleteItem(id) {
+            const idx = items.findIndex(i => i.id === id);
+            if(idx > -1) {
+                deletedItem = { data: items[idx], index: idx };
+                items.splice(idx, 1);
+                saveAndRender();
+                const toast = document.getElementById('undoToast');
+                toast.classList.remove('hidden');
+                clearTimeout(undoTimer);
+                undoTimer = setTimeout(() => {
+                    toast.classList.add('hidden');
+                    deletedItem = null;
+                }, 4000);
+            }
+        }
+        function undoDelete() {
+            if(deletedItem) {
+                items.splice(deletedItem.index, 0, deletedItem.data);
+                saveAndRender();
+                document.getElementById('undoToast').classList.add('hidden');
+                deletedItem = null;
+            }
+        }
+        function confirmCheckout() {
+            const total = items.reduce((a, b) => a + b.cost, 0);
+            // Calculate total amount given to the shopkeeper
+            const totalGiven = items.reduce((a, b) => a + (b.given > 0 ? b.given : 0), 0);
+            const finalChange = totalGiven - total;
+
+            document.getElementById('checkoutTotal').innerText = `৳ ${toBn(total)}`;
+            document.getElementById('checkoutGiven').innerText = `৳ ${toBn(totalGiven)}`;
+            document.getElementById('checkoutChange').innerText = `৳ ${toBn(Math.abs(finalChange))}`;
+            
+            const changeRow = document.getElementById('checkoutChangeRow');
+            changeRow.classList.remove('text-primary', 'dark:text-blue-400', 'text-red-600', 'dark:text-red-400');
+
+            if (finalChange >= 0) {
+                changeRow.querySelector('span:first-child').innerText = 'ফেরত পাবেন:';
+                changeRow.classList.add('text-primary', 'dark:text-blue-400');
+            } else {
+                changeRow.querySelector('span:first-child').innerText = 'আরো পরিশোধ করতে হবে:';
+                changeRow.classList.add('text-red-600', 'dark:text-red-400');
+            }
+
+            const itemListEl = document.getElementById('checkoutItemList');
+            if (items.length === 0) {
+                 itemListEl.innerHTML = `<p class="text-sm text-center text-gray-500 py-2">লিস্টে কোনো আইটেম নেই।</p>`;
+            } else {
+                itemListEl.innerHTML = items.map(item => `
+                    <div class="flex justify-between items-center text-xs dark:text-gray-300">
+                        <span class="truncate">${item.icon} ${item.name} <span class="text-gray-500">(${toBn(item.w)} ${item.unit})</span></span>
+                        <span class="font-bold text-gray-800 dark:text-gray-200">৳ ${toBn(item.cost)}</span>
+                    </div>
+                `).join('');
+            }
+            document.getElementById('confirmModal').classList.remove('hidden');
+            setTimeout(() => document.getElementById('confirmModalContent').classList.remove('opacity-0', 'scale-95'), 10);
+        }
+        function closeConfirmModal() {
+            document.getElementById('confirmModal').classList.add('hidden');
+            document.getElementById('confirmModalContent').classList.add('opacity-0', 'scale-95');
+        }
+        function performCheckout() {
+            closeConfirmModal();
+            const total = items.reduce((a, b) => a + b.cost, 0);
+            wallet -= total;
+            localStorage.setItem('sb5_wallet', wallet);
+            history.unshift({
+                id: Date.now(),
+                date: new Date().toISOString(),
+                total,
+                items: [...items]
+            });
+            localStorage.setItem('sb5_history', JSON.stringify(history));
+            items = [];
+            saveAndRender();
+            const oldTitle = document.getElementById('pageTitle').innerText;
+            document.getElementById('pageTitle').innerHTML = '✅ সম্পন্ন! নতুন ব্যালেন্স: ৳ ' + toBn(wallet);
+            setTimeout(() => {
+                document.getElementById('pageTitle').innerHTML = '<i class="fas fa-cart-shopping mr-1 text-white"></i>স্মার্ট বাজার';
+            }, 3000);
+        }
+        function saveAndRender() { localStorage.setItem('sb5_cart', JSON.stringify(items)); renderHome(); }
+        function toggleMenu() {
+            const sb = document.getElementById('sidebar');
+            const ov = document.getElementById('overlay');
+            if(sb.classList.contains('-translate-x-full')) {
+                sb.classList.remove('-translate-x-full'); ov.classList.remove('hidden');
+            } else {
+                sb.classList.add('-translate-x-full'); ov.classList.add('hidden');
+            }
+        }
+        function toggleFilter() {
+            const searchInput = document.getElementById('listSearch');
+            searchInput.classList.toggle('hidden');
+            if (!searchInput.classList.contains('hidden')) {
+                searchInput.focus();
+            } else {
+                searchInput.value = '';
+                renderHome();
+            }
+        }
+        function openWalletModal() { 
+            document.getElementById('walletModal').classList.remove('hidden');
+            setTimeout(() => document.getElementById('walletModalContent').classList.remove('opacity-0', 'scale-95'), 10);
+            if(wallet>0) document.getElementById('walletInput').value = wallet;
+        }
+        function saveWallet() {
+            const w = parseFloat(document.getElementById('walletInput').value);
+            if(w >= 0) { wallet = w; localStorage.setItem('sb5_wallet', wallet); document.getElementById('walletModal').classList.add('hidden'); renderHome(); }
+        }
+        function setWallet(v) { document.getElementById('walletInput').value = v; }
+        function toggleDarkMode() {
+            document.documentElement.classList.toggle('dark');
+            isDarkMode = !isDarkMode;
+            localStorage.setItem('sb5_theme', isDarkMode ? 'dark' : 'light');
+            document.getElementById('themeIcon').className = isDarkMode ? 'fas fa-sun' : 'fas fa-moon';
+            if (myChart) {
+                myChart.options.plugins.legend.labels.color = isDarkMode ? '#f1f5f9' : '#1e293b';
+                myChart.update();
+            }
+        }
+        function editProfile() {
+            const n = prompt("আপনার নাম লিখুন:", userName);
+            if(n) { userName = n; localStorage.setItem('sb5_user', n); renderHome(); }
+        }
+        function resetAll() {
+             if (window.confirm("আপনি কি নিশ্চিত যে আপনি আপনার সমস্ত ডেটা (তালিকা, ইতিহাস, ব্যালেন্স, নাম) সম্পূর্ণরূপে মুছে ফেলতে চান?")) {
+                localStorage.clear();
+                location.reload();
+            }
+        }
+        function populateIconModal() {
+            const grid = document.getElementById('iconGrid');
+            const allIcons = emojiIcons.concat(Object.values(suggestions).flat().map(i => i.icon));
+            const uniqueIcons = [...new Set(allIcons)].slice(0, 50);
+            
+            grid.innerHTML = uniqueIcons.map(icon => 
+                `<span onclick="selectIcon('${icon}')" class="cursor-pointer hover:bg-gray-200 dark:hover:bg-gray-600 p-1 rounded transition text-center active:scale-90">${icon}</span>`
+            ).join('');
+        }
+        function openIconModal() {
+            document.getElementById('iconModal').classList.remove('hidden');
+            setTimeout(() => document.getElementById('iconModalContent').classList.remove('opacity-0', 'scale-95'), 10);
+        }
+        function closeIconModal() {
+            document.getElementById('iconModal').classList.add('hidden');
+            document.getElementById('iconModalContent').classList.add('opacity-0', 'scale-95');
+        }
+        function selectIcon(icon) {
+            selectedIcon = icon;
+            localStorage.setItem('sb5_default_icon', icon);
+            document.getElementById('selectedIcon').innerText = icon;
+            closeIconModal();
+        }
+        
+        // --- SUGGESTION DATABASE (EXISTING FOR FILL FORM) ---
+        const suggestions = {
+            'মাছ/মাংস': [
+                {name: 'ব্রয়লার মুরগি', icon: '🐔'}, {name: 'সোনালি মুরগি', icon: '🍗'}, 
+                {name: 'গরুর মাংস', icon: '🥩'}, {name: 'খাসির মাংস', icon: '🐐'},
+                {name: 'রুই মাছ', icon: '🐟'}, {name: 'ইলিশ মাছ', icon: '🐠'},
+                {name: 'পাঙ্গাস', icon: '🐡'}, {name: 'তেলাপিয়া', icon: '🐠'},
+                {name: 'চিংড়ি', icon: '🦐'}, {name: 'ডিম (ডজন)', icon: '🥚'},
+                {name: 'হাঁসের ডিম', icon: '🦢'}, {name: 'কবুতরের মাংস', icon: '🕊️'},
+                {name: 'কৈ মাছ', icon: '🎣'}, {name: 'শিং মাছ', icon: '🐟'}
+            ],
+            'শাকসবজি': [
+                {name: 'আলু', icon: '🥔'}, {name: 'পেঁয়াজ', icon: '🧅'}, 
+                {name: 'রসুন', icon: '🧄'}, {name: 'আদা', icon: '🍠'},
+                {name: 'কাঁচা মরিচ', icon: '🌶️'}, {name: 'টমেটো', icon: '🍅'},
+                {name: 'বেগুন', icon: '🍆'}, {name: 'শসা', icon: '🥒'},
+                {name: 'গাজর', icon: '🥕'}, {name: 'ফুলকপি', icon: '🥦'},
+                {name: 'বাঁধাকপি', icon: '🥬'}, {name: 'কলা', icon: '🍌'},
+                {name: 'আপেল', icon: '🍎'}, {name: 'কমলা', icon: '🍊'},
+                {name: 'আম', icon: '🥭'}, {name: 'লেবু', icon: '🍋'}
+            ],
+            'মুদি': [
+                {name: 'মিনিকেট চাল', icon: '🍚'}, {name: 'নাজিরশাইল', icon: '🍚'},
+                {name: 'সয়াবিন তেল', icon: '🍾'}, {name: 'মসুর ডাল', icon: '🥣'},
+                {name: 'চিনি', icon: '🍬'}, {name: 'লবণ', icon: '🧂'},
+                {name: 'আটা', icon: '🍞'}, {name: 'সুজি', icon: '🥣'},
+                {name: 'চা পাতা', icon: '☕'}, {name: 'কফি', icon: '☕'},
+                {name: 'হলুদ গুঁড়া', icon: '🌶️'}, {name: 'মরিচ গুঁড়া', icon: '🌶️'}
+            ],
+            'অন্যান্য': [
+                {name: 'সাবান', icon: '🧼'}, {name: 'শ্যাম্পু', icon: '🧴'},
+                {name: 'টুথপেস্ট', icon: '🦷'}, {name: 'টিস্যু', icon: '🧻'},
+                {name: 'ডিটারজেন্ট', icon: '🧺'}, {name: 'বিস্কুট', icon: '🍪'},
+                {name: 'পাওডার দুধ', icon: '🥛'}, {name: 'বাটার', icon: '🧈'},
+                {name: 'মোমবাতি', icon: '🕯️'}, {name: 'ব্যাটারি', icon: '🔋'}
+            ]
+        };
+        
+        // --- DATA EXPORT/IMPORT (Features 3, 4) ---
+        function exportData() {
+            const data = {
+                items, wishlist, wallet, history, userName, priceMemory, monthlyBudget, appCategories, notes // NEW: Added notes
+            };
+            const jsonString = JSON.stringify(data, null, 2);
+            const blob = new Blob([jsonString], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `smart_bazar_data_${new Date().toISOString().slice(0, 10)}.json`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            
+            console.log("ডেটা এক্সপোর্ট সফল হয়েছে।");
+        }
+        
+        function importDataModal() {
+            document.getElementById('importModal').classList.remove('hidden');
+            setTimeout(() => document.getElementById('importModalContent').classList.remove('opacity-0', 'scale-95'), 10);
+        }
+
+        function importData() {
+            const jsonText = document.getElementById('importJsonArea').value;
+            try {
+                const data = JSON.parse(jsonText);
+                
+                // Update Global State
+                items = data.items || [];
+                wishlist = data.wishlist || [];
+                wallet = data.wallet || 0;
+                history = data.history || [];
+                notes = data.notes || []; // NEW: Import notes
+                userName = data.userName || 'বন্ধু';
+                priceMemory = data.priceMemory || {};
+                monthlyBudget = data.monthlyBudget || 0;
+                appCategories = data.appCategories || appCategories;
+
+                // Update Local Storage
+                localStorage.setItem('sb5_cart', JSON.stringify(items));
+                localStorage.setItem('sb5_wishlist', JSON.stringify(wishlist));
+                localStorage.setItem('sb5_wallet', wallet);
+                localStorage.setItem('sb5_history', JSON.stringify(history));
+                localStorage.setItem('sb5_notes', JSON.stringify(notes)); // NEW: Save notes
+                localStorage.setItem('sb5_user', userName);
+                localStorage.setItem('sb5_price_memory', JSON.stringify(priceMemory));
+                localStorage.setItem('sb5_budget', monthlyBudget);
+                localStorage.setItem('sb5_categories', JSON.stringify(appCategories));
+                
+                // Rerender and close modal
+                document.getElementById('importModal').classList.add('hidden');
+                updateCategoryDropdown();
+                renderHome();
+                renderNotepad(); // Re-render notepad page
+                console.log("ডেটা সফলভাবে ইমপোর্ট করা হয়েছে!");
+                
+            } catch (e) {
+                console.error("ডেটা ইমপোর্ট ব্যর্থ হয়েছে। ফরম্যাট ঠিক আছে কিনা দেখুন।", e);
+                alert("ডেটা ইমপোর্ট ব্যর্থ হয়েছে। ফরম্যাট ঠিক আছে কিনা দেখুন।");
+            }
+        }
+        
+        // --- STATS/REPORTING (Feature 5) ---
+        let myChart = null;
+
+        function renderStats() {
+            // 1. Calculate category totals from history
+            const categoryTotals = {};
+            let totalSpent = 0;
+            
+            history.forEach(shop => {
+                shop.items.forEach(item => {
+                    const catName = item.cat;
+                    const cost = item.cost;
+                    categoryTotals[catName] = (categoryTotals[catName] || 0) + cost;
+                    totalSpent += cost;
+                });
+            });
+
+            const categories = Object.keys(categoryTotals);
+            const data = categories.map(cat => categoryTotals[cat]);
+            const colors = categories.map(cat => appCategories[cat] ? appCategories[cat].color : '#cccccc');
+            
+            const chartCanvas = document.getElementById('categoryChart').getContext('2d');
+
+            if (myChart) {
+                myChart.destroy();
+            }
+
+            myChart = new Chart(chartCanvas, {
+                type: 'doughnut',
+                data: {
+                    labels: categories,
+                    datasets: [{
+                        data: data,
+                        backgroundColor: colors,
+                        hoverOffset: 10
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { position: 'right', labels: { color: isDarkMode ? '#f1f5f9' : '#1e293b', font: { family: 'Hind Siliguri' } } },
+                        title: { display: false }
+                    }
+                }
+            });
+            
+            // 2. Summary
+            const summaryEl = document.getElementById('statsSummary');
+            summaryEl.innerHTML = '';
+            
+            const sortedCategories = Object.entries(categoryTotals).sort(([,a], [,b]) => b - a);
+
+            summaryEl.innerHTML += `<p class="text-xl font-extrabold text-primary dark:text-blue-400">সর্বমোট খরচ: ৳ ${toBn(totalSpent)}</p>`;
+            summaryEl.innerHTML += `<div class="h-px bg-gray-200 dark:bg-gray-700 my-2"></div>`;
+            
+            sortedCategories.forEach(([cat, cost]) => {
+                const percentage = totalSpent > 0 ? ((cost / totalSpent) * 100).toFixed(1) : 0;
+                summaryEl.innerHTML += `
+                    <div class="flex justify-between items-center text-sm font-medium dark:text-gray-300">
+                        <span>${appCategories[cat] ? appCategories[cat].icon : '❓'} ${cat}</span>
+                        <span>৳ ${toBn(cost)} (${toBn(percentage)}%)</span>
+                    </div>
+                `;
+            });
+
+        }
+        
+        // --- PRICE TRACKER (Feature 2) ---
+        function renderPriceTracker() {
+            const priceTracker = {}; // { itemName: { count: N, totalCost: X, avgPrice: Y, prices: [{date, price}] } }
+            
+            history.forEach(shop => {
+                shop.items.forEach(item => {
+                    const name = item.name;
+                    if (!priceTracker[name]) {
+                        priceTracker[name] = { count: 0, totalCost: 0, avgPrice: 0, prices: [] };
+                    }
+                    
+                    priceTracker[name].count += 1;
+                    priceTracker[name].totalCost += item.p;
+                    priceTracker[name].prices.push({ date: shop.date, price: item.p });
+                });
+            });
+            
+            // Calculate Averages and determine trend
+            Object.keys(priceTracker).forEach(name => {
+                const tracker = priceTracker[name];
+                tracker.avgPrice = tracker.totalCost / tracker.count;
+                
+                // Sort prices by date to find latest
+                tracker.prices.sort((a, b) => new Date(b.date) - new Date(a.date));
+                
+                const latestPrice = tracker.prices[0].price;
+                const previousPrice = tracker.prices.length > 1 ? tracker.prices[1].price : latestPrice;
+                
+                tracker.trend = latestPrice > previousPrice ? 'up' : latestPrice < previousPrice ? 'down' : 'stable';
+                tracker.latestPrice = latestPrice;
+                tracker.previousPrice = previousPrice;
+            });
+            
+            const container = document.getElementById('priceTrackerContainer');
+            container.innerHTML = '';
+            
+            const sortedTracker = Object.entries(priceTracker).sort(([,a], [,b]) => b.avgPrice - a.avgPrice);
+            
+            if (sortedTracker.length === 0) {
+                 container.innerHTML = `<p class="text-center py-5 text-gray-400">ইতিহাসে কোনো কেনাকাটা নেই।</p>`;
+                 return;
+            }
+
+            sortedTracker.forEach(([name, tracker]) => {
+                let trendIcon = '';
+                let trendColor = 'text-gray-500';
+
+                if (tracker.trend === 'up') {
+                    trendIcon = '<i class="fas fa-arrow-up"></i>';
+                    trendColor = 'text-red-500';
+                } else if (tracker.trend === 'down') {
+                    trendIcon = '<i class="fas fa-arrow-down"></i>';
+                    trendColor = 'text-green-500';
+                } else {
+                    trendIcon = '<i class="fas fa-minus"></i>';
+                }
+
+                const div = document.createElement('div');
+                div.className = 'bg-gray-50 dark:bg-gray-800 p-4 rounded-xl flex justify-between items-center border dark:border-gray-700';
+                div.innerHTML = `
+                    <div class="flex flex-col">
+                        <p class="font-bold dark:text-white">${name}</p>
+                        <p class="text-xs text-gray-500">গড় দাম: ৳ ${toBn(tracker.avgPrice.toFixed(2))}</p>
+                    </div>
+                    <div class="text-right">
+                        <p class="font-extrabold text-xl ${trendColor}">৳ ${toBn(tracker.latestPrice)} ${trendIcon}</p>
+                        ${tracker.prices.length > 1 ? `<p class="text-xs text-gray-500">আগের দাম: ৳ ${toBn(tracker.previousPrice)}</p>` : ''}
+                    </div>
+                `;
+                container.appendChild(div);
+            });
+        }
+    <script>
+    if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+            navigator.serviceWorker.register('./sw.js')
+                .then(registration => {
+                    console.log('ServiceWorker registration successful:', registration.scope);
+                }, err => {
+                    console.log('ServiceWorker registration failed:', err);
+                });
+        });
+    }
+</script>
+</body>
+</html>
